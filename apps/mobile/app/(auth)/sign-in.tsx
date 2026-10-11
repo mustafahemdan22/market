@@ -17,12 +17,15 @@ import { spacing, radii, elevations } from "../../src/theme/tokens";
 
 function extractClerkError(err: unknown): string | null {
   if (!err || typeof err !== "object") return null;
-  if ("errors" in err && Array.isArray((err as { errors: Array<{ message?: string; longMessage?: string }> }).errors)) {
+  if (
+    "errors" in err &&
+    Array.isArray((err as { errors: Array<{ message?: string; longMessage?: string }> }).errors)
+  ) {
     const first = (err as { errors: Array<{ message?: string; longMessage?: string }> }).errors[0];
     return first?.longMessage ?? first?.message ?? null;
   }
-  if ("message" in err && typeof (err as { message: unknown }).message === "string") {
-    return (err as { message: string }).message;
+  if ("message" in err && typeof err.message === "string") {
+    return err.message;
   }
   return null;
 }
@@ -117,7 +120,9 @@ function ClerkSignInForm() {
 
       <Button
         label={loading ? t("auth.signingIn") : t("auth.signInButton")}
-        onPress={handleSignIn}
+        onPress={() => {
+          void handleSignIn();
+        }}
         loading={loading}
         disabled={loading || !isLoaded}
         variant="primary"
@@ -125,12 +130,7 @@ function ClerkSignInForm() {
         style={styles.submitButton}
       />
 
-      <View
-        style={[
-          styles.switchAuthRow,
-          { flexDirection: isRTL ? "row-reverse" : "row" },
-        ]}
-      >
+      <View style={[styles.switchAuthRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
         <Text variant="body" tone="secondary">
           {t("auth.dontHaveAccount")}{" "}
         </Text>
@@ -167,7 +167,11 @@ function UnconfiguredNotice() {
         ]}
       >
         <View style={[styles.iconCircle, { backgroundColor: colors.warning[50] }]}>
-          <MaterialCommunityIcons name="alert-circle-outline" size={32} color={colors.warning[600]} />
+          <MaterialCommunityIcons
+            name="alert-circle-outline"
+            size={32}
+            color={colors.warning[600]}
+          />
         </View>
 
         <Text variant="h3" align="center" style={styles.noticeTitle}>
@@ -220,7 +224,11 @@ export default function SignInScreen() {
           {/* Header Hero */}
           <View style={styles.heroSection}>
             <View style={[styles.brandIconCircle, { backgroundColor: colors.brand[50] }]}>
-              <MaterialCommunityIcons name="storefront-outline" size={40} color={colors.brand[600]} />
+              <MaterialCommunityIcons
+                name="storefront-outline"
+                size={40}
+                color={colors.brand[600]}
+              />
             </View>
             <Text variant="h1" align="center" style={styles.heroTitle}>
               {t("auth.signInTitle")}
