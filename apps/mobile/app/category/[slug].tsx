@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useTheme } from "../../src/theme/ThemeProvider";
 import { useI18n } from "../../src/i18n/I18nProvider";
-import { catalogRepository } from "../../src/data/fixtures/fixtureRepository";
+import { catalogRepository } from "../../src/data/catalogService";
 import type { Category, Product } from "../../src/data/catalogRepository";
 import { HeaderBar } from "../../src/components/commerce/HeaderBar";
 import { ProductGrid } from "../../src/components/commerce/ProductGrid";
@@ -41,11 +41,7 @@ export default function CategoryScreen() {
     void loadCategoryData();
   }, [slug]);
 
-  const categoryName = category
-    ? isRTL
-      ? category.nameAr
-      : category.name
-    : slug;
+  const categoryName = category ? (isRTL ? category.nameAr : category.name) : slug;
 
   const handleProductPress = (product: Product) => {
     router.push({
@@ -65,10 +61,7 @@ export default function CategoryScreen() {
         onCartPress={() => router.push("/cart")}
       />
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {!loading && products.length === 0 ? (
           <EmptyState
             title={t("search.noResults")}

@@ -59,28 +59,16 @@ export function PriceSummary({
       ) : null}
 
       {/* Subtotal Row */}
-      <View
-        style={[
-          styles.row,
-          { flexDirection: isRTL ? "row-reverse" : "row" },
-        ]}
-      >
+      <View style={[styles.row, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
         <Text variant="body" tone="secondary">
           {t("cart.subtotal")}
         </Text>
-        <Text variant="bodyStrong">
-          {formatMoney(subtotalMinor)}
-        </Text>
+        <Text variant="bodyStrong">{formatMoney(subtotalMinor)}</Text>
       </View>
 
       {/* Discount / Savings Row */}
       {discountMinor > 0 ? (
-        <View
-          style={[
-            styles.row,
-            { flexDirection: isRTL ? "row-reverse" : "row" },
-          ]}
-        >
+        <View style={[styles.row, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
           <Text variant="body" tone="brand">
             {t("cart.discount")}
           </Text>
@@ -91,30 +79,17 @@ export function PriceSummary({
       ) : null}
 
       {/* Delivery Fee Row */}
-      <View
-        style={[
-          styles.row,
-          { flexDirection: isRTL ? "row-reverse" : "row" },
-        ]}
-      >
+      <View style={[styles.row, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
         <Text variant="body" tone="secondary">
           {t("cart.deliveryFee")}
         </Text>
-        <Text
-          variant="bodyStrong"
-          tone={deliveryFeeMinor === 0 ? "brand" : "primary"}
-        >
+        <Text variant="bodyStrong" tone={deliveryFeeMinor === 0 ? "brand" : "primary"}>
           {deliveryFeeMinor === 0 ? "0.00" : formatMoney(deliveryFeeMinor)}
         </Text>
       </View>
 
       {/* Tax Estimate Row */}
-      <View
-        style={[
-          styles.row,
-          { flexDirection: isRTL ? "row-reverse" : "row" },
-        ]}
-      >
+      <View style={[styles.row, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
         <Text variant="caption" tone="muted">
           {t("cart.taxEstimate")}
         </Text>
@@ -126,15 +101,8 @@ export function PriceSummary({
       <Divider space={3} />
 
       {/* Total Row */}
-      <View
-        style={[
-          styles.totalRow,
-          { flexDirection: isRTL ? "row-reverse" : "row" },
-        ]}
-      >
-        <Text variant="h2">
-          {t("cart.total")}
-        </Text>
+      <View style={[styles.totalRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+        <Text variant="h2">{t("cart.total")}</Text>
         <Text variant="priceLarge" tone="brand">
           {formatMoney(totalMinor)}
         </Text>

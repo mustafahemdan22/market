@@ -12,9 +12,21 @@ export interface TokenCache {
  * Uses expo-secure-store on native iOS/Android devices for keychain/keystore encryption.
  * Gracefully falls back to web storage or in-memory storage on web.
  */
-function getWebStorage(): { getItem(key: string): string | null; setItem(key: string, value: string): void; removeItem(key: string): void } | null {
+function getWebStorage(): {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+} | null {
   if (typeof globalThis !== "undefined" && "localStorage" in globalThis) {
-    return (globalThis as unknown as { localStorage: { getItem(k: string): string | null; setItem(k: string, v: string): void; removeItem(k: string): void } }).localStorage;
+    return (
+      globalThis as unknown as {
+        localStorage: {
+          getItem(k: string): string | null;
+          setItem(k: string, v: string): void;
+          removeItem(k: string): void;
+        };
+      }
+    ).localStorage;
   }
   return null;
 }
@@ -55,6 +67,5 @@ function createTokenCache(): TokenCache {
     },
   };
 }
-
 
 export const tokenCache: TokenCache = createTokenCache();

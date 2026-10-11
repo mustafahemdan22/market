@@ -3,6 +3,14 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "noEmit": true,
+    /**
+     * `node` types are TYPE-ONLY for this app. They are required because the
+     * Convex `_generated/api.d.ts` type-imports every backend module, including
+     * the `"use node"` Cloudinary signer which uses `node:crypto`. The
+     * generated `api.js` is a runtime proxy that never imports that module, so
+     * nothing Node-specific reaches the React Native bundle.
+     */
+    "types": ["node", "expo"],
     "paths": {
       "@/*": ["./src/*"]
     }

@@ -17,12 +17,15 @@ import { spacing, radii, elevations } from "../../src/theme/tokens";
 
 function extractClerkError(err: unknown): string | null {
   if (!err || typeof err !== "object") return null;
-  if ("errors" in err && Array.isArray((err as { errors: Array<{ message?: string; longMessage?: string }> }).errors)) {
+  if (
+    "errors" in err &&
+    Array.isArray((err as { errors: Array<{ message?: string; longMessage?: string }> }).errors)
+  ) {
     const first = (err as { errors: Array<{ message?: string; longMessage?: string }> }).errors[0];
     return first?.longMessage ?? first?.message ?? null;
   }
-  if ("message" in err && typeof (err as { message: unknown }).message === "string") {
-    return (err as { message: string }).message;
+  if ("message" in err && typeof err.message === "string") {
+    return err.message;
   }
   return null;
 }
@@ -64,7 +67,12 @@ function ClerkSignUpForm() {
     setError(null);
 
     try {
-      const payload: { emailAddress: string; password: string; firstName?: string; lastName?: string } = {
+      const payload: {
+        emailAddress: string;
+        password: string;
+        firstName?: string;
+        lastName?: string;
+      } = {
         emailAddress: email.trim(),
         password,
       };
@@ -101,12 +109,7 @@ function ClerkSignUpForm() {
         </View>
       ) : null}
 
-      <View
-        style={[
-          styles.nameRow,
-          { flexDirection: isRTL ? "row-reverse" : "row" },
-        ]}
-      >
+      <View style={[styles.nameRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
         <Input
           label={t("auth.firstNameLabel")}
           placeholder={t("auth.firstNamePlaceholder")}
@@ -176,7 +179,9 @@ function ClerkSignUpForm() {
 
       <Button
         label={loading ? t("auth.signingUp") : t("auth.signUpButton")}
-        onPress={handleSignUp}
+        onPress={() => {
+          void handleSignUp();
+        }}
         loading={loading}
         disabled={loading || !isLoaded}
         variant="primary"
@@ -184,12 +189,7 @@ function ClerkSignUpForm() {
         style={styles.submitButton}
       />
 
-      <View
-        style={[
-          styles.switchAuthRow,
-          { flexDirection: isRTL ? "row-reverse" : "row" },
-        ]}
-      >
+      <View style={[styles.switchAuthRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
         <Text variant="body" tone="secondary">
           {t("auth.alreadyHaveAccount")}{" "}
         </Text>
@@ -226,7 +226,11 @@ function UnconfiguredNotice() {
         ]}
       >
         <View style={[styles.iconCircle, { backgroundColor: colors.warning[50] }]}>
-          <MaterialCommunityIcons name="alert-circle-outline" size={32} color={colors.warning[600]} />
+          <MaterialCommunityIcons
+            name="alert-circle-outline"
+            size={32}
+            color={colors.warning[600]}
+          />
         </View>
 
         <Text variant="h3" align="center" style={styles.noticeTitle}>
@@ -279,7 +283,11 @@ export default function SignUpScreen() {
           {/* Header Hero */}
           <View style={styles.heroSection}>
             <View style={[styles.brandIconCircle, { backgroundColor: colors.brand[50] }]}>
-              <MaterialCommunityIcons name="account-plus-outline" size={40} color={colors.brand[600]} />
+              <MaterialCommunityIcons
+                name="account-plus-outline"
+                size={40}
+                color={colors.brand[600]}
+              />
             </View>
             <Text variant="h1" align="center" style={styles.heroTitle}>
               {t("auth.signUpTitle")}

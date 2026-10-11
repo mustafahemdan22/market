@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useTheme } from "../../src/theme/ThemeProvider";
 import { useI18n, useFormat } from "../../src/i18n/I18nProvider";
-import { catalogRepository } from "../../src/data/fixtures/fixtureRepository";
+import { catalogRepository } from "../../src/data/catalogService";
 import type { Product } from "../../src/data/catalogRepository";
 import { HeaderBar } from "../../src/components/commerce/HeaderBar";
 import { SearchField } from "../../src/components/ui/SearchField";
@@ -58,17 +58,10 @@ export default function SearchScreen() {
       edges={["top"]}
       style={[styles.safeArea, { backgroundColor: colors.surface.canvas }]}
     >
-      <HeaderBar
-        title={t("search.title")}
-        onCartPress={() => router.push("/cart")}
-      />
+      <HeaderBar title={t("search.title")} onCartPress={() => router.push("/cart")} />
 
       <View style={styles.searchSection}>
-        <SearchField
-          value={query}
-          onChangeText={setQuery}
-          onClear={() => setQuery("")}
-        />
+        <SearchField value={query} onChangeText={setQuery} onClear={() => setQuery("")} />
       </View>
 
       {/* Filter Chips Bar */}
@@ -111,10 +104,7 @@ export default function SearchScreen() {
         </Text>
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {!loading && products.length === 0 ? (
           <EmptyState
             title={t("search.noResults")}

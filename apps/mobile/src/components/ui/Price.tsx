@@ -23,19 +23,13 @@ export function Price({
   const { isRTL, t } = useI18n();
 
   const formattedPrice = formatMoney(priceMinor);
-  const formattedCompareAt = compareAtPriceMinor
-    ? formatMoney(compareAtPriceMinor)
-    : null;
+  const formattedCompareAt = compareAtPriceMinor ? formatMoney(compareAtPriceMinor) : null;
 
   const priceVariant = size === "lg" ? "priceLarge" : size === "sm" ? "h3" : "price";
 
   return (
     <View
-      style={[
-        styles.container,
-        { flexDirection: isRTL ? "row-reverse" : "row" },
-        style,
-      ]}
+      style={[styles.container, { flexDirection: isRTL ? "row-reverse" : "row" }, style]}
       accessibilityRole="text"
       accessibilityLabel={formattedPrice}
     >

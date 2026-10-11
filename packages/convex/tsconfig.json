@@ -1,8 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["node"],
+    "types": ["node", "vite/client"],
+    "allowJs": true,
+    "checkJs": false,
     "noEmit": true
   },
-  "include": ["convex/**/*.ts", "vitest.config.ts"]
+  "include": ["convex/**/*.ts", "convex/**/*.js", "vitest.config.ts"]
 }

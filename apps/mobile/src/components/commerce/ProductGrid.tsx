@@ -41,16 +41,18 @@ export function ProductGrid({
         {Array.from({ length: skeletonCount }).map((_, idx) => (
           <View
             key={`skel-${idx}`}
-            style={[
-              styles.itemWrapper,
-              { width: columnWidth, marginBottom: gutter },
-            ]}
+            style={[styles.itemWrapper, { width: columnWidth, marginBottom: gutter }]}
           >
             <Skeleton height={columnWidth} borderRadius={radii.md} />
             <Skeleton height={14} width="60%" style={styles.skeletonSpacing} />
             <Skeleton height={18} width="90%" style={styles.skeletonSpacing} />
             <Skeleton height={22} width="40%" style={styles.skeletonSpacing} />
-            <Skeleton height={38} width="100%" borderRadius={radii.md} style={styles.skeletonSpacing} />
+            <Skeleton
+              height={38}
+              width="100%"
+              borderRadius={radii.md}
+              style={styles.skeletonSpacing}
+            />
           </View>
         ))}
       </View>
@@ -60,14 +62,8 @@ export function ProductGrid({
   return (
     <View style={[styles.grid, style]}>
       {products.map((product) => (
-        <View
-          key={product.id}
-          style={[styles.itemWrapper, { width: columnWidth }]}
-        >
-          <ProductCard
-            product={product}
-            onPress={() => onProductPress(product)}
-          />
+        <View key={product.id} style={[styles.itemWrapper, { width: columnWidth }]}>
+          <ProductCard product={product} onPress={() => onProductPress(product)} />
         </View>
       ))}
     </View>

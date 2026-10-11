@@ -101,11 +101,7 @@ export function QuantityStepper({
           },
         ]}
       >
-        <MaterialCommunityIcons
-          name="plus"
-          size={18}
-          color={colors.brand[600]}
-        />
+        <MaterialCommunityIcons name="plus" size={18} color={colors.brand[600]} />
       </Pressable>
     </View>
   );

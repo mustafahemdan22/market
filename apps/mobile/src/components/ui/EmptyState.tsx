@@ -26,17 +26,8 @@ export function EmptyState({
 
   return (
     <View style={[styles.container, style]}>
-      <View
-        style={[
-          styles.iconCircle,
-          { backgroundColor: colors.brand[50] },
-        ]}
-      >
-        <MaterialCommunityIcons
-          name={iconName}
-          size={42}
-          color={colors.brand[600]}
-        />
+      <View style={[styles.iconCircle, { backgroundColor: colors.brand[50] }]}>
+        <MaterialCommunityIcons name={iconName} size={42} color={colors.brand[600]} />
       </View>
 
       <Text variant="h2" align="center" style={styles.title}>

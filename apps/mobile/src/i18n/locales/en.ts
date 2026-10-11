@@ -137,10 +137,22 @@ export const en: TranslationDictionary = {
   "auth.errorUserExists": "An account with this email already exists. Try signing in.",
   "auth.errorInvalidCode": "Invalid or expired verification code. Please request a new one.",
   "auth.clerkNotConfigured": "Clerk Authentication Not Configured",
-  "auth.clerkConfigInstructions": "Set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your environment to enable real Clerk authentication.",
+  "auth.clerkConfigInstructions":
+    "Set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your environment to enable real Clerk authentication.",
   "auth.signedInAs": "Signed in as",
   "auth.roleCustomer": "Customer",
   "auth.roleAdmin": "Admin",
+  "auth.errorTitle": "Authentication problem",
+  "auth.errorSupportHint":
+    "Clerk could not start. Check that EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY is valid and that the Clerk instance is reachable, then retry.",
+  "auth.sessionEndedTitle": "Session ended",
+  "auth.sessionEndedDesc": "Your session expired or was signed out. Please sign in again.",
+  "auth.errorSignOut": "Sign out failed. Please try again.",
+
+  // Data source
+  "data.sampleDataTitle": "Sample catalogue",
+  "data.sampleDataBody":
+    "Showing bundled sample products. Set EXPO_PUBLIC_CONVEX_URL to load live stock.",
 
   // Common Actions & States
   "action.retry": "Try again",

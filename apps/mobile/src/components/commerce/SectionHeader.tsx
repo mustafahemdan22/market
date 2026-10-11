@@ -25,13 +25,7 @@ export function SectionHeader({
   const { isRTL, t, mirrorStyle } = useI18n();
 
   return (
-    <View
-      style={[
-        styles.container,
-        { flexDirection: isRTL ? "row-reverse" : "row" },
-        style,
-      ]}
-    >
+    <View style={[styles.container, { flexDirection: isRTL ? "row-reverse" : "row" }, style]}>
       <View style={styles.titleColumn}>
         <Text variant="h2">{title}</Text>
         {subtitle ? (
@@ -49,21 +43,12 @@ export function SectionHeader({
           enforceMinTarget={false}
           style={styles.seeAllButton}
         >
-          <View
-            style={[
-              styles.seeAllRow,
-              { flexDirection: isRTL ? "row-reverse" : "row" },
-            ]}
-          >
+          <View style={[styles.seeAllRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
             <Text variant="label" tone="brand">
               {seeAllLabel ?? t("home.seeAll")}
             </Text>
             <View style={[styles.chevron, mirrorStyle()]}>
-              <MaterialCommunityIcons
-                name="chevron-right"
-                size={18}
-                color={colors.brand[600]}
-              />
+              <MaterialCommunityIcons name="chevron-right" size={18} color={colors.brand[600]} />
             </View>
           </View>
         </Pressable>

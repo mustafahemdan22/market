@@ -42,22 +42,12 @@ export function CartLineItem({ item, onItemPress: _onItemPress, style }: CartLin
     >
       {/* Thumbnail */}
       <View style={styles.thumbnailWrapper}>
-        <ProductImage
-          uri={product.images[0]}
-          alt={name}
-          aspectRatio={1}
-          borderRadius={radii.md}
-        />
+        <ProductImage uri={product.images[0]} alt={name} aspectRatio={1} borderRadius={radii.md} />
       </View>
 
       {/* Info & Quantity details */}
       <View style={styles.detailsColumn}>
-        <View
-          style={[
-            styles.titleRow,
-            { flexDirection: isRTL ? "row-reverse" : "row" },
-          ]}
-        >
+        <View style={[styles.titleRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
           <View style={styles.titleContainer}>
             <Text variant="caption" tone="muted">
               {unit}
@@ -82,12 +72,7 @@ export function CartLineItem({ item, onItemPress: _onItemPress, style }: CartLin
         </View>
 
         {/* Price and Stepper Row */}
-        <View
-          style={[
-            styles.actionsRow,
-            { flexDirection: isRTL ? "row-reverse" : "row" },
-          ]}
-        >
+        <View style={[styles.actionsRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
           <View>
             <Price priceMinor={product.priceMinor} size="sm" />
             <Text variant="caption" tone="secondary">
@@ -97,9 +82,7 @@ export function CartLineItem({ item, onItemPress: _onItemPress, style }: CartLin
 
           <QuantityStepper
             value={quantity}
-            onChange={(newQty) =>
-              updateQuantity(product.id, newQty, selectedVariantId)
-            }
+            onChange={(newQty) => updateQuantity(product.id, newQty, selectedVariantId)}
             min={0}
             max={product.stockQuantity}
             size="sm"

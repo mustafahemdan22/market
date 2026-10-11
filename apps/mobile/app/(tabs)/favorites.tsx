@@ -6,7 +6,7 @@ import { useTheme } from "../../src/theme/ThemeProvider";
 import { useI18n } from "../../src/i18n/I18nProvider";
 import { useFavoritesStore } from "../../src/store/favoritesStore";
 import { useCartStore } from "../../src/store/cartStore";
-import { catalogRepository } from "../../src/data/fixtures/fixtureRepository";
+import { catalogRepository } from "../../src/data/catalogService";
 import type { Product } from "../../src/data/catalogRepository";
 import { HeaderBar } from "../../src/components/commerce/HeaderBar";
 import { Button } from "../../src/components/ui/Button";
@@ -60,15 +60,9 @@ export default function FavoritesScreen() {
       edges={["top"]}
       style={[styles.safeArea, { backgroundColor: colors.surface.canvas }]}
     >
-      <HeaderBar
-        title={t("favorites.title")}
-        onCartPress={() => router.push("/cart")}
-      />
+      <HeaderBar title={t("favorites.title")} onCartPress={() => router.push("/cart")} />
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {products.length > 0 ? (
           <View style={styles.actionHeader}>
             <Button

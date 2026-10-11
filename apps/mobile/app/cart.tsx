@@ -19,13 +19,7 @@ export default function CartScreen() {
   const { colors } = useTheme();
   const { isRTL, t } = useI18n();
 
-  const {
-    items,
-    couponCode,
-    applyCoupon,
-    removeCoupon,
-    getTotals,
-  } = useCartStore();
+  const { items, couponCode, applyCoupon, removeCoupon, getTotals } = useCartStore();
 
   const [inputCoupon, setInputCoupon] = useState("");
   const [couponError, setCouponError] = useState<string | null>(null);
@@ -48,11 +42,7 @@ export default function CartScreen() {
       edges={["top"]}
       style={[styles.safeArea, { backgroundColor: colors.surface.canvas }]}
     >
-      <HeaderBar
-        title={t("cart.title")}
-        onBack={() => router.back()}
-        showCart={false}
-      />
+      <HeaderBar title={t("cart.title")} onBack={() => router.back()} showCart={false} />
 
       {items.length === 0 ? (
         <View style={styles.emptyContainer}>
@@ -109,10 +99,7 @@ export default function CartScreen() {
                 </View>
               ) : (
                 <View
-                  style={[
-                    styles.couponInputRow,
-                    { flexDirection: isRTL ? "row-reverse" : "row" },
-                  ]}
+                  style={[styles.couponInputRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}
                 >
                   <View style={styles.inputFlex}>
                     <Input

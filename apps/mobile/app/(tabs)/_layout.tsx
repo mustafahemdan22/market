@@ -44,11 +44,7 @@ export default function TabsLayout() {
         options={{
           title: t("tab.search"),
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons
-              name="magnify"
-              size={24}
-              color={color}
-            />
+            <MaterialCommunityIcons name="magnify" size={24} color={color} />
           ),
         }}
       />

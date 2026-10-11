@@ -48,11 +48,7 @@ export function ProductImage({
         />
       ) : (
         <View style={styles.fallbackContainer}>
-          <MaterialCommunityIcons
-            name="food-apple-outline"
-            size={36}
-            color={colors.text.muted}
-          />
+          <MaterialCommunityIcons name="food-apple-outline" size={36} color={colors.text.muted} />
         </View>
       )}
     </View>

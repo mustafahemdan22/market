@@ -46,21 +46,12 @@ export function HeaderBar({
       ]}
     >
       {/* Leading Slot (Back or Brand Title) */}
-      <View
-        style={[
-          styles.leading,
-          { flexDirection: isRTL ? "row-reverse" : "row" },
-        ]}
-      >
+      <View style={[styles.leading, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
         {onBack ? (
           <IconButton
             icon={
               <View style={mirrorStyle()}>
-                <MaterialCommunityIcons
-                  name="arrow-left"
-                  size={24}
-                  color={colors.text.primary}
-                />
+                <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text.primary} />
               </View>
             }
             onPress={onBack}
@@ -82,12 +73,7 @@ export function HeaderBar({
       </View>
 
       {/* Trailing Slot (Language switcher + Cart badge) */}
-      <View
-        style={[
-          styles.trailing,
-          { flexDirection: isRTL ? "row-reverse" : "row" },
-        ]}
-      >
+      <View style={[styles.trailing, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
         {showLanguageToggle ? (
           <Pressable
             onPress={toggleLanguage}
@@ -127,12 +113,7 @@ export function HeaderBar({
               accessibilityLabel={t("header.cartBadge")}
             />
             {totalCount > 0 ? (
-              <View
-                style={[
-                  styles.badgeCircle,
-                  { backgroundColor: colors.brand[600] },
-                ]}
-              >
+              <View style={[styles.badgeCircle, { backgroundColor: colors.brand[600] }]}>
                 <Text variant="caption" tone="inverse" style={styles.badgeText}>
                   {formatNumber(totalCount)}
                 </Text>

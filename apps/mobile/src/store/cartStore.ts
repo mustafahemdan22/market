@@ -60,19 +60,14 @@ export const useCartStore = create<CartState>((set, get) => ({
 
     set((state) => {
       const existingIndex = state.items.findIndex(
-        (item) =>
-          item.product.id === product.id &&
-          item.selectedVariantId === variantId,
+        (item) => item.product.id === product.id && item.selectedVariantId === variantId,
       );
 
       if (existingIndex >= 0) {
         const existing = state.items[existingIndex];
         if (!existing) return state;
 
-        const newQuantity = Math.min(
-          product.stockQuantity,
-          existing.quantity + quantity,
-        );
+        const newQuantity = Math.min(product.stockQuantity, existing.quantity + quantity);
         const updated = [...state.items];
         updated[existingIndex] = { ...existing, quantity: newQuantity };
         return { items: updated };
@@ -93,8 +88,7 @@ export const useCartStore = create<CartState>((set, get) => ({
   removeItem: (productId: string, variantId?: string) => {
     set((state) => ({
       items: state.items.filter(
-        (item) =>
-          !(item.product.id === productId && item.selectedVariantId === variantId),
+        (item) => !(item.product.id === productId && item.selectedVariantId === variantId),
       ),
     }));
   },
@@ -107,10 +101,7 @@ export const useCartStore = create<CartState>((set, get) => ({
 
     set((state) => ({
       items: state.items.map((item) => {
-        if (
-          item.product.id === productId &&
-          item.selectedVariantId === variantId
-        ) {
+        if (item.product.id === productId && item.selectedVariantId === variantId) {
           const clamped = Math.min(item.product.stockQuantity, quantity);
           return { ...item, quantity: clamped };
         }
@@ -159,12 +150,8 @@ export const useCartStore = create<CartState>((set, get) => ({
         : 0;
 
     // Free delivery check
-    const hasFreeDelivery =
-      subtotalMinor >= FREE_DELIVERY_THRESHOLD_MINOR || subtotalMinor === 0;
-    const freeDeliveryRemainingMinor = Math.max(
-      0,
-      FREE_DELIVERY_THRESHOLD_MINOR - subtotalMinor,
-    );
+    const hasFreeDelivery = subtotalMinor >= FREE_DELIVERY_THRESHOLD_MINOR || subtotalMinor === 0;
+    const freeDeliveryRemainingMinor = Math.max(0, FREE_DELIVERY_THRESHOLD_MINOR - subtotalMinor);
     const deliveryFeeMinor: MinorUnits =
       subtotalMinor === 0 ? 0 : hasFreeDelivery ? 0 : STANDARD_DELIVERY_FEE_MINOR;
 

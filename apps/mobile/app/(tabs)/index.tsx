@@ -1,19 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  RefreshControl,
-} from "react-native";
+import { View, ScrollView, StyleSheet, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useTheme } from "../../src/theme/ThemeProvider";
 import { useI18n } from "../../src/i18n/I18nProvider";
-import { catalogRepository } from "../../src/data/fixtures/fixtureRepository";
+import { catalogRepository } from "../../src/data/catalogService";
 import type { Category, Product } from "../../src/data/catalogRepository";
 import { HeaderBar } from "../../src/components/commerce/HeaderBar";
 import { SearchField } from "../../src/components/ui/SearchField";
 import { Banner } from "../../src/components/ui/Banner";
+import { DataSourceBanner } from "../../src/components/commerce/DataSourceBanner";
 import { CategoryTile } from "../../src/components/commerce/CategoryTile";
 import { SectionHeader } from "../../src/components/commerce/SectionHeader";
 import { ProductCard } from "../../src/components/commerce/ProductCard";
@@ -97,7 +93,12 @@ export default function HomeScreen() {
           subtitle={t("header.location")}
           onCartPress={() => router.push("/cart")}
         />
-        <ErrorState message={error} onRetry={() => { void loadData(); }} />
+        <ErrorState
+          message={error}
+          onRetry={() => {
+            void loadData();
+          }}
+        />
       </SafeAreaView>
     );
   }
@@ -125,8 +126,9 @@ export default function HomeScreen() {
           />
         }
       >
-        {/* Development Prototype Banner */}
+        {/* States explicitly whether the catalogue below is live or sample data. */}
         <View style={styles.sectionPadding}>
+          <DataSourceBanner />
           <Banner message={t("home.devBanner")} tone="dev" />
         </View>
 
@@ -180,10 +182,7 @@ export default function HomeScreen() {
 
         {/* Deals Horizontal Rail */}
         <View style={styles.sectionPadding}>
-          <SectionHeader
-            title={t("home.dealsTitle")}
-            onSeeAll={() => router.push("/search")}
-          />
+          <SectionHeader title={t("home.dealsTitle")} onSeeAll={() => router.push("/search")} />
           {loading ? (
             <ScrollView
               horizontal
@@ -209,10 +208,7 @@ export default function HomeScreen() {
             >
               {deals.map((deal) => (
                 <View key={deal.id} style={styles.dealCardWrapper}>
-                  <ProductCard
-                    product={deal}
-                    onPress={() => handleProductPress(deal)}
-                  />
+                  <ProductCard product={deal} onPress={() => handleProductPress(deal)} />
                 </View>
               ))}
             </ScrollView>

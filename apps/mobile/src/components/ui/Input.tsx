@@ -42,8 +42,8 @@ export function Input({
   const borderColor = error
     ? colors.danger[600]
     : isFocused
-    ? colors.border.focus
-    : colors.border.subtle;
+      ? colors.border.focus
+      : colors.border.subtle;
 
   const borderWidth = isFocused || error ? 2 : 1;
 

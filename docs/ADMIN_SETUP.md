@@ -15,13 +15,17 @@ resource was created or modified.
 > This file is a **contract**, not a configuration. It documents _which_
 > variables exist and _where_ each value is set. Real values belong in:
 >
-> - `apps/admin/.env.local` (public client values) — git-ignored
-> - `apps/mobile/.env` (public client values) — git-ignored
+> - `apps/mobile/.env.local` (public client values for Expo: `EXPO_PUBLIC_*` only) — git-ignored
+> - `apps/admin/.env.local` (public client values for Next.js: `NEXT_PUBLIC_*` only) — git-ignored
 > - the **Convex Dashboard** Environment Variables page (server secrets)
+> - `.env.local` at repository root (Convex CLI deployment pointer: `CONVEX_DEPLOYMENT`) — git-ignored
 >
 > `.gitignore` already excludes `.env`, `.env.local` and `.env.*.local` at any
 > depth, and re-includes `.env.example`. That protection only holds while
 > `.env.example` genuinely contains placeholders.
+>
+> **CRITICAL RULE**: Never include server secrets, Cloudinary secrets, or
+> `PANDAMA_ADMIN_SUBJECTS` in `apps/mobile/.env.local` or `apps/admin/.env.local`.
 
 An earlier revision of this repository had two live Clerk keys committed at
 `.env.example` lines 15 and 31 (a publishable key and a **secret key**). They
@@ -46,7 +50,7 @@ Admin authorization is **server-side and cannot be bypassed from the browser**.
 
 | Control                                                          | Where                                                      |
 | ---------------------------------------------------------------- | ---------------------------------------------------------- |
-| Clerk JWT signature verified by Convex                           | `packages/convex/convex/auth.config.ts`                    |
+| Clerk JWT signature verified by Convex against Clerk JWKS        | `packages/convex/convex/auth.config.ts`                    |
 | Caller identity read from the verified token only                | `packages/convex/convex/lib/auth.ts` → `getUserIdentity()` |
 | Admin allowlist from server env `PANDAMA_ADMIN_SUBJECTS`         | `packages/convex/convex/lib/auth.ts` → `requireAdmin()`    |
 | Fails closed when the allowlist is unset/empty                   | `isAdminSubject()` returns `false` when the set is empty   |
@@ -108,20 +112,27 @@ audience to exist.
 4. Copy the **issuer** shown on that page. It looks like
    `https://<instance>.clerk.accounts.dev`.
 
-> This is the value for `CLERK_FRONTEND_API_URL` (Convex's own guide calls the
-> same URL `CLERK_JWT_ISSUER_DOMAIN`). Both names are read by `auth.config.ts`.
+> **Key Rule**: Set this issuer as `CLERK_JWT_ISSUER_DOMAIN` in Convex.
+> Convex verifies token signatures directly using Clerk's public JWKS.
+> **`CLERK_SECRET_KEY` is NOT required for basic Clerk/Convex JWT authentication.**
+> Add `CLERK_SECRET_KEY` only if the backend calls the Clerk Backend API directly.
 
 ---
 
-## 5. Add the admin allowlist to Convex
+## 5. Add Convex Environment Variables (Server-Only)
 
-Two options. Both set a **server-only** value; neither writes a credential into
-the repository.
+Two variables are **required** for Clerk + Convex authentication and admin authorization:
 
-### Option A — local development
+1. `CLERK_JWT_ISSUER_DOMAIN`
+2. `PANDAMA_ADMIN_SUBJECTS`
+
+Both are **server-only** and must never be exposed to clients.
+
+### Option A — local development CLI
 
 ```bash
 # from the repository root, once a Convex deployment is linked
+npx convex env set CLERK_JWT_ISSUER_DOMAIN https://<instance>.clerk.accounts.dev
 npx convex env set PANDAMA_ADMIN_SUBJECTS user_abc123,user_xyz789
 ```
 
@@ -129,20 +140,23 @@ npx convex env set PANDAMA_ADMIN_SUBJECTS user_abc123,user_xyz789
 
 1. Open the Convex Dashboard for your deployment.
 2. **Settings → Environment Variables**.
-3. Add:
+3. Add the following variables:
 
-   | Name                       | Value                                   |
-   | -------------------------- | --------------------------------------- |
-   | `CLERK_FRONTEND_API_URL`   | `https://<instance>.clerk.accounts.dev` |
-   | `PANDAMA_ADMIN_SUBJECTS`   | `user_abc123,user_xyz789`               |
-   | `CLOUDINARY_CLOUD_NAME`    | your Cloudinary cloud name              |
-   | `CLOUDINARY_API_KEY`       | your Cloudinary API key                 |
-   | `CLOUDINARY_API_SECRET`    | your Cloudinary API secret              |
-   | `CLOUDINARY_UPLOAD_FOLDER` | `grocery/products`                      |
+| Name [SERVER-ONLY]             | Value / Description                     | Purpose                                                      |
+| ------------------------------ | --------------------------------------- | ------------------------------------------------------------ |
+| `CLERK_JWT_ISSUER_DOMAIN`      | `https://<instance>.clerk.accounts.dev` | **Required**: Issuer for JWT verification against Clerk JWKS |
+| `PANDAMA_ADMIN_SUBJECTS`       | `user_abc123,user_xyz789`               | **Required**: Admin allowlist (**Clerk User IDs ONLY**)      |
+| `CLOUDINARY_CLOUD_NAME`        | your Cloudinary cloud name              | Server-side signed media upload generation                   |
+| `CLOUDINARY_API_KEY`           | your Cloudinary API key                 | Server-side signed media upload generation                   |
+| `CLOUDINARY_API_SECRET`        | your Cloudinary API secret              | Server-side signed media upload generation                   |
+| `CLOUDINARY_UPLOAD_FOLDER`     | `grocery/products`                      | Server-enforced folder prefix                                |
+| `DEFAULT_CURRENCY`             | `EGP`                                   | Store default currency                                       |
+| `CLERK_SECRET_KEY`             | `sk_test_...` (optional)                | Add **ONLY** if backend calls Clerk Backend API              |
+| `CLERK_WEBHOOK_SIGNING_SECRET` | `whsec_...` (optional)                  | Add **ONLY** if handling Clerk webhooks in `http.ts`         |
 
-Multiple admins are comma-separated with no spaces. The list is compared against
-the **verified Clerk subject**, so the values must be user ids (`user_...`),
-not emails.
+> **IMPORTANT**: `PANDAMA_ADMIN_SUBJECTS` must contain **Clerk User IDs** (e.g., `user_2...`),
+> **NOT email addresses**. Multiple IDs are comma-separated with no spaces.
+> Never expose Cloudinary secrets or admin allowlists to mobile or admin client bundles.
 
 ---
 
@@ -176,6 +190,9 @@ Implemented as `createUploadSignature` in `packages/convex/convex/media.ts`
 - Returns `cloudName`, `apiKey`, `signature` and the signed parameter set.
 - **Never returns `CLOUDINARY_API_SECRET`.** The secret is read inside the
   action, hashed with the parameter payload, and discarded.
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` live
+  **strictly in the Convex backend environment**. They must never be exposed to
+  mobile or admin client bundles.
 - No Cloudinary SDK runs inside a query or mutation. Only this action performs
   the signing.
 - `CLOUDINARY_UPLOAD_FOLDER` is server-chosen and signed, so a client cannot
@@ -193,30 +210,45 @@ transformation URLs and the CDN shape never becomes stale stored data.
 
 ---
 
-## 8. Public client variables
+## 8. Client Environment Setup
 
-Copy `.env.example` to `apps/admin/.env.local` and fill in:
+### A. Mobile Application — `apps/mobile/.env.local`
 
-| Variable                            | Where it comes from                            |
-| ----------------------------------- | ---------------------------------------------- |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk Dashboard → API Keys → Publishable key   |
-| `NEXT_PUBLIC_CONVEX_URL`            | Convex Dashboard → Settings → URL & Deploy Key |
+Use `apps/mobile/.env.local` (do **not** place mobile variables in the repository root).
+Include **only** public values:
 
-Both are public by design. The dashboard renders an explicit "not configured"
-screen listing whichever is missing rather than an empty catalogue, so a
-misconfiguration is never mistaken for "no data".
+| Variable [PUBLIC]                   | Where it comes from                            | Note                                     |
+| ----------------------------------- | ---------------------------------------------- | ---------------------------------------- |
+| `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk Dashboard → API Keys → Publishable key   | Public client key (starts with `pk_`)    |
+| `EXPO_PUBLIC_CONVEX_URL`            | Convex Dashboard → Settings → URL & Deploy Key | **Public deployment URL**, not a secret. |
+
+> **Rule**: Never include server secrets or `PANDAMA_ADMIN_SUBJECTS` in `apps/mobile/.env.local`.
+
+### B. Admin Dashboard — `apps/admin/.env.local`
+
+If `apps/admin` uses Clerk web authentication, configure `apps/admin/.env.local`:
+
+| Variable                            | Where it comes from                            | Note                                          |
+| ----------------------------------- | ---------------------------------------------- | --------------------------------------------- |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk Dashboard → API Keys → Publishable key   | Public web client key (starts with `pk_`)     |
+| `NEXT_PUBLIC_CONVEX_URL`            | Convex Dashboard → Settings → URL & Deploy Key | **Public deployment URL**, not a secret.      |
+| `CLERK_SECRET_KEY` [SERVER-ONLY]    | Clerk Dashboard → API Keys → Secret key        | Add **ONLY** if admin calls Clerk Backend API |
+
+> **Rule**: Both `EXPO_PUBLIC_CONVEX_URL` and `NEXT_PUBLIC_CONVEX_URL` are **public deployment URLs**
+> (e.g., `https://<deployment>.convex.cloud`), **NOT secrets**.
+> Never place Cloudinary API secrets or `PANDAMA_ADMIN_SUBJECTS` in the admin client environment.
 
 ---
 
 ## 9. Values that must NEVER reach the client
 
-| Value                          | Why                                                                                 |
-| ------------------------------ | ----------------------------------------------------------------------------------- |
-| `CLERK_SECRET_KEY`             | Full Backend API access. Server-only.                                               |
-| `CLOUDINARY_API_SECRET`        | Lets anyone sign arbitrary uploads to your account.                                 |
-| `CLOUDINARY_API_KEY`           | Semi-public, but kept server-side in this design.                                   |
-| `CLERK_WEBHOOK_SIGNING_SECRET` | Forges webhooks if leaked.                                                          |
-| `PANDAMA_ADMIN_SUBJECTS`       | The admin allowlist. Leaking it tells an attacker exactly which accounts to target. |
+| Value [SERVER-ONLY]            | Why                                                                                          |
+| ------------------------------ | -------------------------------------------------------------------------------------------- |
+| `CLERK_SECRET_KEY`             | Full Backend API access. Server-only. Add only if calling Clerk Backend API.                 |
+| `CLOUDINARY_API_SECRET`        | Lets anyone sign arbitrary uploads to your account. Convex backend runtime ONLY.             |
+| `CLOUDINARY_API_KEY`           | Semi-public, but kept server-side in the Convex runtime.                                     |
+| `CLERK_WEBHOOK_SIGNING_SECRET` | Forges webhooks if leaked. Convex runtime ONLY.                                              |
+| `PANDAMA_ADMIN_SUBJECTS`       | The admin allowlist (Clerk User IDs). Leaking it tells an attacker which accounts to target. |
 
 Never give any of these an `EXPO_PUBLIC_*`, `NEXT_PUBLIC_*` or other
 client-inlined prefix. There is no client-side signing code path in this

@@ -29,7 +29,10 @@ interface I18nContextValue {
   readonly toggleLanguage: () => void;
   readonly setCurrency: (currency: SupportedCurrencyCode) => void;
   readonly t: (key: TranslationKey, params?: Record<string, string | number>) => string;
-  readonly formatMoney: (minor: number, options?: { currency?: SupportedCurrencyCode; symbol?: boolean }) => string;
+  readonly formatMoney: (
+    minor: number,
+    options?: { currency?: SupportedCurrencyCode; symbol?: boolean },
+  ) => string;
   readonly formatNumber: (value: number) => string;
   readonly mirrorStyle: () => ViewStyle;
 }

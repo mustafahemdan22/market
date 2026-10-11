@@ -145,6 +145,15 @@ export interface TranslationDictionary {
   "auth.signedInAs": string;
   "auth.roleCustomer": string;
   "auth.roleAdmin": string;
+  "auth.errorTitle": string;
+  "auth.errorSupportHint": string;
+  "auth.sessionEndedTitle": string;
+  "auth.sessionEndedDesc": string;
+  "auth.errorSignOut": string;
+
+  // Data source
+  "data.sampleDataTitle": string;
+  "data.sampleDataBody": string;
 
   // Common Actions & States
   "action.retry": string;

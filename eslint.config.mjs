@@ -27,6 +27,9 @@ export default tseslint.config(
       "*.mjs",
       "**/*.mjs",
       "**/*.config.ts",
+      // CommonJS toolchain configs, not application source.
+      "**/metro.config.js",
+      "**/postcss.config.js",
     ],
   },
   js.configs.recommended,
@@ -56,5 +59,12 @@ export default tseslint.config(
   {
     files: ["**/*.test.ts", "**/*.test.tsx"],
     rules: { "no-console": "off" },
+  },
+  {
+    // Convex codegen output carries `/* eslint-disable */` banners. Keep these
+    // files INSIDE the type-aware program (excluding them degrades every
+    // consumer to "any"), but do not report the banner as unused.
+    files: ["**/_generated/**"],
+    linterOptions: { reportUnusedDisableDirectives: "off" },
   },
 );

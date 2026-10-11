@@ -1,20 +1,10 @@
-import {
-  Text as RNText,
-  type TextProps as RNTextProps,
-  type TextStyle,
-} from "react-native";
+import { Text as RNText, type TextProps as RNTextProps, type TextStyle } from "react-native";
 import { useTheme } from "../../theme/ThemeProvider";
 import { useI18n } from "../../i18n/I18nProvider";
 import { typography, type TypographyVariant } from "../../theme/tokens";
 
 export type TextTone =
-  | "primary"
-  | "secondary"
-  | "muted"
-  | "inverse"
-  | "brand"
-  | "danger"
-  | "accent";
+  "primary" | "secondary" | "muted" | "inverse" | "brand" | "danger" | "accent";
 
 export interface TextProps extends RNTextProps {
   readonly variant?: TypographyVariant;
@@ -40,16 +30,16 @@ export function Text({
     tone === "primary"
       ? colors.text.primary
       : tone === "secondary"
-      ? colors.text.secondary
-      : tone === "muted"
-      ? colors.text.muted
-      : tone === "inverse"
-      ? colors.text.inverse
-      : tone === "brand"
-      ? colors.text.brand
-      : tone === "danger"
-      ? colors.text.danger
-      : colors.text.accent;
+        ? colors.text.secondary
+        : tone === "muted"
+          ? colors.text.muted
+          : tone === "inverse"
+            ? colors.text.inverse
+            : tone === "brand"
+              ? colors.text.brand
+              : tone === "danger"
+                ? colors.text.danger
+                : colors.text.accent;
 
   // Extra line height adjustment for Arabic script
   const adjustedLineHeight = isRTL

@@ -1,10 +1,4 @@
-import {
-  View,
-  TextInput,
-  StyleSheet,
-  type StyleProp,
-  type ViewStyle,
-} from "react-native";
+import { View, TextInput, StyleSheet, type StyleProp, type ViewStyle } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme } from "../../theme/ThemeProvider";
 import { useI18n } from "../../i18n/I18nProvider";
@@ -51,11 +45,7 @@ export function SearchField({
       ]}
     >
       <View style={styles.searchIcon}>
-        <MaterialCommunityIcons
-          name="magnify"
-          size={22}
-          color={colors.text.muted}
-        />
+        <MaterialCommunityIcons name="magnify" size={22} color={colors.text.muted} />
       </View>
 
       <TextInput
@@ -77,13 +67,7 @@ export function SearchField({
 
       {value.length > 0 ? (
         <IconButton
-          icon={
-            <MaterialCommunityIcons
-              name="close-circle"
-              size={18}
-              color={colors.text.muted}
-            />
-          }
+          icon={<MaterialCommunityIcons name="close-circle" size={18} color={colors.text.muted} />}
           onPress={handleClear}
           accessibilityLabel={t("search.clear")}
           size={36}

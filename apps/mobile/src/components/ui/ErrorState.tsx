@@ -13,28 +13,14 @@ export interface ErrorStateProps {
   readonly style?: StyleProp<ViewStyle>;
 }
 
-export function ErrorState({
-  message,
-  onRetry,
-  retryLabel,
-  style,
-}: ErrorStateProps) {
+export function ErrorState({ message, onRetry, retryLabel, style }: ErrorStateProps) {
   const { colors } = useTheme();
   const { t } = useI18n();
 
   return (
     <View style={[styles.container, style]}>
-      <View
-        style={[
-          styles.iconCircle,
-          { backgroundColor: colors.danger[50] },
-        ]}
-      >
-        <MaterialCommunityIcons
-          name="alert-circle-outline"
-          size={42}
-          color={colors.danger[600]}
-        />
+      <View style={[styles.iconCircle, { backgroundColor: colors.danger[50] }]}>
+        <MaterialCommunityIcons name="alert-circle-outline" size={42} color={colors.danger[600]} />
       </View>
 
       <Text variant="h2" align="center" style={styles.title}>

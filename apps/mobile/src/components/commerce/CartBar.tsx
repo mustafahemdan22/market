@@ -37,17 +37,8 @@ export function CartBar({ onViewCart, style }: CartBarProps) {
         ]}
       >
         <View style={styles.infoColumn}>
-          <View
-            style={[
-              styles.countRow,
-              { flexDirection: isRTL ? "row-reverse" : "row" },
-            ]}
-          >
-            <MaterialCommunityIcons
-              name="basket"
-              size={18}
-              color={colors.neutral[0]}
-            />
+          <View style={[styles.countRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+            <MaterialCommunityIcons name="basket" size={18} color={colors.neutral[0]} />
             <Text
               variant="label"
               tone="inverse"
@@ -70,11 +61,7 @@ export function CartBar({ onViewCart, style }: CartBarProps) {
           style={styles.actionButton}
           rightIcon={
             <View style={mirrorStyle()}>
-              <MaterialCommunityIcons
-                name="arrow-right"
-                size={16}
-                color={colors.brand[600]}
-              />
+              <MaterialCommunityIcons name="arrow-right" size={16} color={colors.brand[600]} />
             </View>
           }
         />

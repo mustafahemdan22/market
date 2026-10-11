@@ -13,14 +13,7 @@ export interface ChipProps {
   readonly accessibilityLabel?: string;
 }
 
-export function Chip({
-  label,
-  selected,
-  onPress,
-  icon,
-  style,
-  accessibilityLabel,
-}: ChipProps) {
+export function Chip({ label, selected, onPress, icon, style, accessibilityLabel }: ChipProps) {
   const { colors } = useTheme();
 
   return (
@@ -40,11 +33,7 @@ export function Chip({
     >
       <View style={styles.content}>
         {icon ? <View style={styles.iconSlot}>{icon}</View> : null}
-        <Text
-          variant="label"
-          tone={selected ? "brand" : "secondary"}
-          align="center"
-        >
+        <Text variant="label" tone={selected ? "brand" : "secondary"} align="center">
           {label}
         </Text>
       </View>

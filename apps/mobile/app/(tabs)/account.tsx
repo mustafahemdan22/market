@@ -89,7 +89,8 @@ function ClerkAuthenticatedCard() {
     );
   }
 
-  const displayName = user.fullName || user.primaryEmailAddress?.emailAddress || t("auth.signedInAs");
+  const displayName =
+    user.fullName || user.primaryEmailAddress?.emailAddress || t("auth.signedInAs");
   const email = user.primaryEmailAddress?.emailAddress;
   const avatarUrl = user.imageUrl;
 
@@ -128,7 +129,9 @@ function ClerkAuthenticatedCard() {
 
       <Button
         label={signingOut ? t("auth.signingOut") : t("auth.signOutButton")}
-        onPress={handleSignOut}
+        onPress={() => {
+          void handleSignOut();
+        }}
         loading={signingOut}
         disabled={signingOut}
         variant="secondary"
@@ -213,11 +216,7 @@ export default function AccountScreen() {
       </View>
 
       <View style={mirrorStyle()}>
-        <MaterialCommunityIcons
-          name="chevron-right"
-          size={20}
-          color={colors.text.muted}
-        />
+        <MaterialCommunityIcons name="chevron-right" size={20} color={colors.text.muted} />
       </View>
     </Pressable>
   );
@@ -229,10 +228,7 @@ export default function AccountScreen() {
     >
       <HeaderBar title={t("account.title")} showLanguageToggle={false} />
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Dynamic Clerk Profile / Unconfigured Notice Card */}
         {isClerkConfigured ? <ClerkAuthenticatedCard /> : <UnconfiguredProfileCard />}
 
@@ -260,9 +256,7 @@ export default function AccountScreen() {
                 <MaterialCommunityIcons name="translate" size={20} color={colors.brand[600]} />
               </View>
               <View style={styles.settingTextContainer}>
-                <Text variant="bodyStrong">
-                  {isRTL ? "العربية (RTL — مصر)" : "English (LTR)"}
-                </Text>
+                <Text variant="bodyStrong">{isRTL ? "العربية (RTL — مصر)" : "English (LTR)"}</Text>
                 <Text variant="caption" tone="secondary">
                   {isRTL ? "اضغط للتبديل إلى English" : "Tap to switch to العربية"}
                 </Text>

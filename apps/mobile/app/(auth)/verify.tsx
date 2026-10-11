@@ -16,12 +16,15 @@ import { spacing, radii, elevations } from "../../src/theme/tokens";
 
 function extractClerkError(err: unknown): string | null {
   if (!err || typeof err !== "object") return null;
-  if ("errors" in err && Array.isArray((err as { errors: Array<{ message?: string; longMessage?: string }> }).errors)) {
+  if (
+    "errors" in err &&
+    Array.isArray((err as { errors: Array<{ message?: string; longMessage?: string }> }).errors)
+  ) {
     const first = (err as { errors: Array<{ message?: string; longMessage?: string }> }).errors[0];
     return first?.longMessage ?? first?.message ?? null;
   }
-  if ("message" in err && typeof (err as { message: unknown }).message === "string") {
-    return (err as { message: string }).message;
+  if ("message" in err && typeof err.message === "string") {
+    return err.message;
   }
   return null;
 }
@@ -131,7 +134,9 @@ function ClerkVerifyForm({ email }: ClerkVerifyFormProps) {
 
       <Button
         label={loading ? t("auth.verifying") : t("auth.verifyButton")}
-        onPress={handleVerify}
+        onPress={() => {
+          void handleVerify();
+        }}
         loading={loading}
         disabled={loading || !isLoaded}
         variant="primary"
@@ -141,7 +146,9 @@ function ClerkVerifyForm({ email }: ClerkVerifyFormProps) {
 
       <Button
         label={t("auth.resendCodeButton")}
-        onPress={handleResend}
+        onPress={() => {
+          void handleResend();
+        }}
         loading={resending}
         disabled={resending || !isLoaded}
         variant="ghost"
@@ -169,7 +176,11 @@ function UnconfiguredNotice() {
         ]}
       >
         <View style={[styles.iconCircle, { backgroundColor: colors.warning[50] }]}>
-          <MaterialCommunityIcons name="alert-circle-outline" size={32} color={colors.warning[600]} />
+          <MaterialCommunityIcons
+            name="alert-circle-outline"
+            size={32}
+            color={colors.warning[600]}
+          />
         </View>
 
         <Text variant="h3" align="center" style={styles.noticeTitle}>
@@ -223,7 +234,11 @@ export default function VerifyScreen() {
           {/* Header Hero */}
           <View style={styles.heroSection}>
             <View style={[styles.brandIconCircle, { backgroundColor: colors.brand[50] }]}>
-              <MaterialCommunityIcons name="email-seal-outline" size={40} color={colors.brand[600]} />
+              <MaterialCommunityIcons
+                name="email-seal-outline"
+                size={40}
+                color={colors.brand[600]}
+              />
             </View>
             <Text variant="h1" align="center" style={styles.heroTitle}>
               {t("auth.verifyTitle")}
@@ -233,11 +248,7 @@ export default function VerifyScreen() {
             </Text>
           </View>
 
-          {isClerkConfigured ? (
-            <ClerkVerifyForm email={params.email} />
-          ) : (
-            <UnconfiguredNotice />
-          )}
+          {isClerkConfigured ? <ClerkVerifyForm email={params.email} /> : <UnconfiguredNotice />}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

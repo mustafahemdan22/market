@@ -3,13 +3,7 @@ import { useTheme } from "../../theme/ThemeProvider";
 import { Text } from "./Text";
 import { radii, spacing } from "../../theme/tokens";
 
-export type BadgeTone =
-  | "brand"
-  | "accent"
-  | "success"
-  | "warning"
-  | "danger"
-  | "neutral";
+export type BadgeTone = "brand" | "accent" | "success" | "warning" | "danger" | "neutral";
 
 export interface BadgeProps {
   readonly label: string;
@@ -18,12 +12,7 @@ export interface BadgeProps {
   readonly style?: StyleProp<ViewStyle>;
 }
 
-export function Badge({
-  label,
-  tone = "brand",
-  size = "md",
-  style,
-}: BadgeProps) {
+export function Badge({ label, tone = "brand", size = "md", style }: BadgeProps) {
   const { colors } = useTheme();
 
   let bg = colors.brand[50];

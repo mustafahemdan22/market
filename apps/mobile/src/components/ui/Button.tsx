@@ -1,10 +1,4 @@
-import {
-  ActivityIndicator,
-  StyleSheet,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from "react-native";
+import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import { useTheme } from "../../theme/ThemeProvider";
 import { useI18n } from "../../i18n/I18nProvider";
 import { Pressable } from "./Pressable";
@@ -102,12 +96,7 @@ export function Button({
       {loading ? (
         <ActivityIndicator size="small" color={spinnerColor} />
       ) : (
-        <View
-          style={[
-            styles.contentRow,
-            { flexDirection: isRTL ? "row-reverse" : "row" },
-          ]}
-        >
+        <View style={[styles.contentRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
           {leftIcon ? <View style={styles.iconSlot}>{leftIcon}</View> : null}
           <Text variant={textVariant} tone={textColor} align="center">
             {label}

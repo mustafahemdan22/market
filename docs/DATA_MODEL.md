@@ -11,16 +11,16 @@
 The first draft of this document contained claims that the official Convex documentation does not
 support. They are corrected here. See §1.2 and §1.3 for the underlying platform facts.
 
-| # | Original claim | Status | Correction |
-|---|---|---|---|
-| 1 | "`clerkUserId` is unique" | ❌ **False as written** | Convex indexes do **not** enforce uniqueness. See §1.2 and §3.1. |
-| 2 | "`sku` unique", "`slug` unique", "`orderNumber`" unique | ❌ **False as written** | Same. See §1.2. |
-| 3 | "`orders.idempotencyKey` unique index" | ❌ **Misleading** | The index gives O(log n) *lookup*, not enforcement. See §3.11. |
-| 4 | "`payments.providerRef` unique when present" | ❌ **False** | See §3.12. |
-| 5 | `currency: v.literal("USD")` | ⚠️ **Reversible-but-costly** | Target market unconfirmed. Replaced with a validated string + central config. See §1.4. |
-| 6 | Only "32 indexes per table" documented | ⚠️ **Incomplete** | Full verified limit table added in §1.5. |
-| 7 | Inventory described as `onHand`/`reserved` fields only | ⚠️ **Incomplete** | Full reservation lifecycle added in §3.6. |
-| 8 | "a retried transaction never double-decrements" | ✅ Correct, but unexplained | Mechanism documented in §1.3. |
+| #   | Original claim                                          | Status                       | Correction                                                                              |
+| --- | ------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------- |
+| 1   | "`clerkUserId` is unique"                               | ❌ **False as written**      | Convex indexes do **not** enforce uniqueness. See §1.2 and §3.1.                        |
+| 2   | "`sku` unique", "`slug` unique", "`orderNumber`" unique | ❌ **False as written**      | Same. See §1.2.                                                                         |
+| 3   | "`orders.idempotencyKey` unique index"                  | ❌ **Misleading**            | The index gives O(log n) _lookup_, not enforcement. See §3.11.                          |
+| 4   | "`payments.providerRef` unique when present"            | ❌ **False**                 | See §3.12.                                                                              |
+| 5   | `currency: v.literal("USD")`                            | ⚠️ **Reversible-but-costly** | Target market unconfirmed. Replaced with a validated string + central config. See §1.4. |
+| 6   | Only "32 indexes per table" documented                  | ⚠️ **Incomplete**            | Full verified limit table added in §1.5.                                                |
+| 7   | Inventory described as `onHand`/`reserved` fields only  | ⚠️ **Incomplete**            | Full reservation lifecycle added in §3.6.                                               |
+| 8   | "a retried transaction never double-decrements"         | ✅ Correct, but unexplained  | Mechanism documented in §1.3.                                                           |
 
 ---
 
@@ -28,21 +28,21 @@ support. They are corrected here. See §1.2 and §1.3 for the underlying platfor
 
 ### 1.1 Conventions
 
-| Rule | Rationale |
-|---|---|
-| **Money is always an integer in minor units** (`priceMinor: 349`) | Floating-point currency arithmetic produces silent rounding errors. Display formatting is a client concern only. |
-| Every table has `createdAt` / `updatedAt` (`v.number()`, ms epoch) | Convex provides `_creationTime` but not an update timestamp. Ordering by `updatedAt` is a common admin need. |
-| Every user-owned table has a `by_user` index | Without it, listing a user's rows is an unbounded `.collect()`. |
-| No document stores derived totals that can drift | `orderItems` are the source of truth; totals are recomputed from them inside the checkout mutation. |
-| Soft delete only where history matters (`products`, `categories`) | Hard delete would orphan historical `orderItems`. |
-| Snapshots on `orderItems` | A past invoice must not change when a product is renamed or repriced. |
+| Rule                                                               | Rationale                                                                                                        |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| **Money is always an integer in minor units** (`priceMinor: 349`)  | Floating-point currency arithmetic produces silent rounding errors. Display formatting is a client concern only. |
+| Every table has `createdAt` / `updatedAt` (`v.number()`, ms epoch) | Convex provides `_creationTime` but not an update timestamp. Ordering by `updatedAt` is a common admin need.     |
+| Every user-owned table has a `by_user` index                       | Without it, listing a user's rows is an unbounded `.collect()`.                                                  |
+| No document stores derived totals that can drift                   | `orderItems` are the source of truth; totals are recomputed from them inside the checkout mutation.              |
+| Soft delete only where history matters (`products`, `categories`)  | Hard delete would orphan historical `orderItems`.                                                                |
+| Snapshots on `orderItems`                                          | A past invoice must not change when a product is renamed or repriced.                                            |
 
 ### 1.2 ⚠️ Convex does NOT enforce uniqueness — verified
 
-> **Official documentation says:** *"Each index consists of: 1. A name. **Must be unique per
-> table.** 2. An ordered list of fields to index."*
+> **Official documentation says:** _"Each index consists of: 1. A name. **Must be unique per
+> table.** 2. An ordered list of fields to index."_
 > — [Convex: Indexes](https://docs.convex.dev/database/reading-data/indexes)
-> *(docs.convex.dev/production/state/limits, checked 2026-10-10)*
+> _(docs.convex.dev/production/state/limits, checked 2026-10-10)_
 
 **Only the index NAME must be unique.** There is no `unique: true` modifier, no
 `unique(…)` declaration, and no UNIQUE constraint anywhere in the Convex schema API. The word
@@ -52,7 +52,7 @@ Corroborating evidence: [convex-ents#51 — "Uniqueness is not enforced when wri
 (https://github.com/get-convex/convex-ents/issues/51) is an open upstream issue describing exactly
 this gap, raised by a Convex core contributor.
 
-**Consequence:** a "unique index" in this schema is a *lookup accelerator*, not a constraint. Two
+**Consequence:** a "unique index" in this schema is a _lookup accelerator_, not a constraint. Two
 concurrent `ctx.db.insert()` calls with the same SKU **will both succeed** unless the surrounding
 mutation does something else.
 
@@ -72,14 +72,14 @@ if (existing !== null) {
   throw new ConvexError({ code: "DUPLICATE_SKU" });
 }
 
-await ctx.db.insert("productVariants", { sku: normalizedSku, /* ... */ });
+await ctx.db.insert("productVariants", { sku: normalizedSku /* ... */ });
 ```
 
 Why it holds:
 
 1. The `withIndex(...).unique()` call reads the `by_sku` index range for `normalizedSku` and records
    it in the transaction's **read set**.
-2. The subsequent `insert` writes a key into that *same* index range.
+2. The subsequent `insert` writes a key into that _same_ index range.
 3. If a concurrent transaction committed an insert into that range first, the committer detects
    the overlap and **aborts** this transaction with an OCC conflict.
 4. Convex **retries** the mutation. On retry, the `unique()` now returns the row the other
@@ -87,11 +87,11 @@ Why it holds:
 
 **Three rules that must hold, or the pattern silently breaks:**
 
-| Rule | Why it matters |
-|---|---|
-| The uniqueness check and the insert must be in the **same mutation body** | Splitting them across two functions reintroduces the race. |
-| The check must query **via an index on the same field** | OCC detects conflicts on *index ranges read*. An unindexed `.filter()` scan may not register the range the same way, and is O(n) regardless. |
-| Never rely on `.unique()` throwing to mean "already exists" across retries | After an OCC retry the world has changed. Re-derive state on every attempt; never cache a pre-retry read. |
+| Rule                                                                       | Why it matters                                                                                                                               |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| The uniqueness check and the insert must be in the **same mutation body**  | Splitting them across two functions reintroduces the race.                                                                                   |
+| The check must query **via an index on the same field**                    | OCC detects conflicts on _index ranges read_. An unindexed `.filter()` scan may not register the range the same way, and is O(n) regardless. |
+| Never rely on `.unique()` throwing to mean "already exists" across retries | After an OCC retry the world has changed. Re-derive state on every attempt; never cache a pre-retry read.                                    |
 
 **Anti-pattern to avoid:** a plain `ctx.db.insert()` with no prior indexed read. Two concurrent
 inserts with the same value both commit.
@@ -103,14 +103,14 @@ inserts with the same value both commit.
 > [How Convex Works](https://stack.convex.dev/how-convex-works) ·
 > [Errors and Warnings](https://docs.convex.dev/error.md)
 
-| Fact | Source | Design consequence |
-|---|---|---|
-| A Convex mutation **is** the transaction. No `BEGIN`/`COMMIT`. | [Overview](https://docs.convex.dev/understanding/overview) | All read+write for one business operation lives in one function body. |
-| Isolation is **serializable** via optimistic concurrency control — not merely snapshot isolation. | [OCC](https://docs.convex.dev/database/advanced/occ) | Any interleaving of committed transactions equals some serial order. No write skew. |
-| The **read set records index ranges**, not just returned documents. | [How Convex Works](https://stack.convex.dev/how-convex-works) | Enables the uniqueness pattern in §1.2. |
-| Conflicting mutations are **retried automatically** by the runtime. | [Errors](https://docs.convex.dev/error.md) | Handler code may re-execute. It must be idempotent. |
-| Retries are **bounded**; a persistently hot document eventually throws a write-conflict error. | [Errors](https://docs.convex.dev/error.md) | Hot counters need sharding or a different design (§3.11). |
-| Determinism is required: **no `Date.now()`, no `Math.random()`, no network I/O inside a mutation.** | [Overview](https://docs.convex.dev/understanding/overview) | Use `ctx.scheduler` or an action. `Date.now()` must be passed in as an argument from the caller. |
+| Fact                                                                                                | Source                                                        | Design consequence                                                                               |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| A Convex mutation **is** the transaction. No `BEGIN`/`COMMIT`.                                      | [Overview](https://docs.convex.dev/understanding/overview)    | All read+write for one business operation lives in one function body.                            |
+| Isolation is **serializable** via optimistic concurrency control — not merely snapshot isolation.   | [OCC](https://docs.convex.dev/database/advanced/occ)          | Any interleaving of committed transactions equals some serial order. No write skew.              |
+| The **read set records index ranges**, not just returned documents.                                 | [How Convex Works](https://stack.convex.dev/how-convex-works) | Enables the uniqueness pattern in §1.2.                                                          |
+| Conflicting mutations are **retried automatically** by the runtime.                                 | [Errors](https://docs.convex.dev/error.md)                    | Handler code may re-execute. It must be idempotent.                                              |
+| Retries are **bounded**; a persistently hot document eventually throws a write-conflict error.      | [Errors](https://docs.convex.dev/error.md)                    | Hot counters need sharding or a different design (§3.11).                                        |
+| Determinism is required: **no `Date.now()`, no `Math.random()`, no network I/O inside a mutation.** | [Overview](https://docs.convex.dev/understanding/overview)    | Use `ctx.scheduler` or an action. `Date.now()` must be passed in as an argument from the caller. |
 
 **⚠️ Design rule this imposes:** `placeOrder` receives `now` as an argument from the calling
 action/query wrapper, not from `Date.now()` inside the mutation. Coupon windows and reservation
@@ -128,13 +128,13 @@ confirmed, and hardcoding forces a two-phase schema migration to change.
 **Decision:** store `currency` as a `v.string()` validated at the write boundary against a central
 allowlist in `packages/shared`, and resolve the display currency from config.
 
-| Property | Value |
-|---|---|
-| Storage | Integer minor units, `v.number()`, always |
-| `currency` field | `v.string()` — validated, not `v.literal()` |
-| Allowlist | `packages/shared/src/domain/currency.ts` → `SUPPORTED_CURRENCIES` |
-| Default | Set by config; **currently unresolved — see §8 D1** |
-| Known exponent | EGP = 2 (piastres), USD = 2 (cents), EUR = 2, SAR = 2, AED = 2 |
+| Property         | Value                                                             |
+| ---------------- | ----------------------------------------------------------------- |
+| Storage          | Integer minor units, `v.number()`, always                         |
+| `currency` field | `v.string()` — validated, not `v.literal()`                       |
+| Allowlist        | `packages/shared/src/domain/currency.ts` → `SUPPORTED_CURRENCIES` |
+| Default          | Set by config; **currently unresolved — see §8 D1**               |
+| Known exponent   | EGP = 2 (piastres), USD = 2 (cents), EUR = 2, SAR = 2, AED = 2    |
 
 Egyptian Pound (EGP) and US Dollar (USD) both use **2 minor units**, so adopting EGP changes no
 arithmetic — only the `currency` value and locale-aware formatting. That is deliberately why minor
@@ -149,30 +149,30 @@ units were chosen.
 From [docs.convex.dev/production/state/limits](https://docs.convex.dev/production/state/limits) and
 [Full Text Search](https://docs.convex.dev/search/text-search), checked 2026-10-10.
 
-| Limit | Value | Relevance here |
-|---|---|---|
-| Indexes per table | **32** | See §4 budget. |
-| **Fields per index** | **16** | Not previously documented. No index here exceeds 2. |
-| Index name length | 64 chars | Fine. |
-| Documents scanned per function | **32,000** | Bounds `.collect()`. |
-| Data read per function | **16 MiB** | Bounds large joins. |
-| Documents written per function | **16,000** | Bounds bulk operations. |
-| Data written per function | **16 MiB** | Bounds bulk operations. |
-| Index ranges read per function | **4,096** | Bounds the number of `db.get`/`db.query` calls. |
-| Search indexes per table | **4** | `products` uses 1. |
-| Filter fields per search index | **16** | `products` uses 3. |
-| **Terms per search query** | **16** | Truncate long search input. |
-| **Filter expressions per search query** | **8** | Bounds the filter sheet. |
-| Max term length | 32 B | Long terms are silently dropped. |
-| **Max search result set** | **1,024** | `collect()` **throws** past this. Use `.take()`/`.paginate()`. |
-| Search index limit / max results | 4 / 1024 | — |
-| Document size | **1 MiB** | Order snapshots must stay well under. |
-| Fields per document | 1,024 | — |
-| Field nesting depth | 16 | Address snapshot uses 1. |
+| Limit                                   | Value      | Relevance here                                                 |
+| --------------------------------------- | ---------- | -------------------------------------------------------------- |
+| Indexes per table                       | **32**     | See §4 budget.                                                 |
+| **Fields per index**                    | **16**     | Not previously documented. No index here exceeds 2.            |
+| Index name length                       | 64 chars   | Fine.                                                          |
+| Documents scanned per function          | **32,000** | Bounds `.collect()`.                                           |
+| Data read per function                  | **16 MiB** | Bounds large joins.                                            |
+| Documents written per function          | **16,000** | Bounds bulk operations.                                        |
+| Data written per function               | **16 MiB** | Bounds bulk operations.                                        |
+| Index ranges read per function          | **4,096**  | Bounds the number of `db.get`/`db.query` calls.                |
+| Search indexes per table                | **4**      | `products` uses 1.                                             |
+| Filter fields per search index          | **16**     | `products` uses 3.                                             |
+| **Terms per search query**              | **16**     | Truncate long search input.                                    |
+| **Filter expressions per search query** | **8**      | Bounds the filter sheet.                                       |
+| Max term length                         | 32 B       | Long terms are silently dropped.                               |
+| **Max search result set**               | **1,024**  | `collect()` **throws** past this. Use `.take()`/`.paginate()`. |
+| Search index limit / max results        | 4 / 1024   | —                                                              |
+| Document size                           | **1 MiB**  | Order snapshots must stay well under.                          |
+| Fields per document                     | 1,024      | —                                                              |
+| Field nesting depth                     | 16         | Address snapshot uses 1.                                       |
 
 > **⚠️ `paginationOpts.maximumRowsRead` and `maximumBytesRead` are NOT enforced for search queries.**
 > Source: [`convex-js/src/server/pagination.ts`](https://github.com/get-convex/convex-js/blob/main/src/server/pagination.ts)
-> — *"Currently this is not enforced for search queries."*
+> — _"Currently this is not enforced for search queries."_
 > Catalog search must therefore enforce its own page cap in code, not rely on pagination options.
 
 ### 1.6 Index field requirements
@@ -234,6 +234,7 @@ users: defineTable({
 ```
 
 **Invariants**
+
 - `[U]` **One row per Clerk user.** The Clerk webhook handler (HTTP action) resolves the user inside
   a single mutation:
   1. `withIndex("by_clerkUserId").unique()` — records the index range in the read set.
@@ -245,6 +246,7 @@ users: defineTable({
   the second aborts on OCC and retries, then finds the row created by the first.
 
   **The `by_clerkUserId` index provides the lookup, not the guarantee.** See §1.2.
+
 - `role` is **never** accepted as a client argument. It is set by the webhook handler from a
   server-side `ADMIN_USER_IDS` allowlist, or by an `requireAdmin()`-guarded mutation.
 - A `suspended` user keeps their rows (orders, addresses) but is rejected by every guard.
@@ -273,9 +275,10 @@ addresses: defineTable({
 ```
 
 **Invariants**
+
 - Read/write/delete require `address.userId === resolvedUser._id`. Checked inside the function,
   never inferred from a client-passed user id.
-- **Default address, concurrent-safe.** Setting a default reads *all* the user's addresses via
+- **Default address, concurrent-safe.** Setting a default reads _all_ the user's addresses via
   `by_user`, patches every `isDefault: true` row to `false`, then patches the target to `true` —
   all inside one mutation. Because the mutation reads the whole `by_user` index range, two
   concurrent "set default" calls conflict and retry; the last writer wins and exactly one default
@@ -299,6 +302,7 @@ categories: defineTable({
 ```
 
 **Invariants**
+
 - `[U]` `slug` unique. Same read-then-write pattern (§1.2) on `by_slug`. Collisions from a
   human-friendly slug are resolved by appending `-2`, `-3`, … **inside the same mutation**, re-reading
   until a free slug is found.
@@ -346,6 +350,7 @@ products: defineTable({
 ```
 
 **Invariants**
+
 - `[U]` `slug` unique — §1.2 pattern on `by_slug`.
 - Only `status: "active"` products appear in public catalog queries.
 - `priceMinor` is a **display cache**, recomputed whenever any variant price changes. Checkout never
@@ -376,6 +381,7 @@ productVariants: defineTable({
 ```
 
 **Invariants**
+
 - `[U]` `sku` unique, uppercased **before** the uniqueness read so case variants collide as intended.
 - Exactly one `isDefault: true` per product. Enforced inside the create/update mutation by reading
   the product's variants via `by_product`, patching the incumbent, then patching the new one — one
@@ -421,32 +427,32 @@ inventoryMovements: defineTable({
 
 #### 3.6.1 Definitions
 
-| Term | Formula | Meaning |
-|---|---|---|
-| `onHand` | stored | Physical units in the warehouse |
-| `reserved` | stored | Units committed to open orders awaiting shipment |
+| Term            | Formula             | Meaning                                                        |
+| --------------- | ------------------- | -------------------------------------------------------------- |
+| `onHand`        | stored              | Physical units in the warehouse                                |
+| `reserved`      | stored              | Units committed to open orders awaiting shipment               |
 | **`available`** | `onHand - reserved` | **What a new customer may buy.** Never stored; always derived. |
 
 `available` is the only number the storefront shows and the only number checkout compares against.
 
 #### 3.6.2 Lifecycle — every transition
 
-| # | Event | `onHand` | `reserved` | Movement `reason` | `onHandDelta` / `reservedDelta` | Guard |
-|---|---|---|---|---|---|---|
-| 1 | **Checkout (reserve)** | — | `+qty` | `reserve` | `0` / `+qty` | Abort if `available < qty` |
-| 2 | **Payment confirmed** | — | — | — | no movement | Signature-verified webhook only |
-| 3 | **Fulfilment / dispatch** | `-qty` | `-qty` | `commit` | `-qty` / `-qty` | Only from `confirmed`/`preparing` |
-| 4 | **Payment failed** | — | `-qty` | `release` | `0` / `-qty` | One release per `(orderId, variantId)` |
-| 5 | **Reservation expiry** | — | `-qty` | `release` | `0` / `-qty` | Scheduled sweep; same guard as #4 |
-| 6 | **Cancel before dispatch** | — | `-qty` | `release` | `0` / `-qty` | One release per `(orderId, variantId)` |
-| 7 | **Cancel after dispatch** | `+qty` | — | `return` | `+qty` / `0` | Distinct reason; audited |
-| 8 | **Customer return** | `+qty` | — | `return` | `+qty` / `0` | Admin action + audit log |
-| 9 | **Restock** | `+qty` | — | `restock` | `+qty` / `0` | Admin action + audit log |
-| 10 | **Damage / write-off** | `-qty` | — | `damaged` | `-qty` / `0` | Admin action + audit log |
+| #   | Event                      | `onHand` | `reserved` | Movement `reason` | `onHandDelta` / `reservedDelta` | Guard                                  |
+| --- | -------------------------- | -------- | ---------- | ----------------- | ------------------------------- | -------------------------------------- |
+| 1   | **Checkout (reserve)**     | —        | `+qty`     | `reserve`         | `0` / `+qty`                    | Abort if `available < qty`             |
+| 2   | **Payment confirmed**      | —        | —          | —                 | no movement                     | Signature-verified webhook only        |
+| 3   | **Fulfilment / dispatch**  | `-qty`   | `-qty`     | `commit`          | `-qty` / `-qty`                 | Only from `confirmed`/`preparing`      |
+| 4   | **Payment failed**         | —        | `-qty`     | `release`         | `0` / `-qty`                    | One release per `(orderId, variantId)` |
+| 5   | **Reservation expiry**     | —        | `-qty`     | `release`         | `0` / `-qty`                    | Scheduled sweep; same guard as #4      |
+| 6   | **Cancel before dispatch** | —        | `-qty`     | `release`         | `0` / `-qty`                    | One release per `(orderId, variantId)` |
+| 7   | **Cancel after dispatch**  | `+qty`   | —          | `return`          | `+qty` / `0`                    | Distinct reason; audited               |
+| 8   | **Customer return**        | `+qty`   | —          | `return`          | `+qty` / `0`                    | Admin action + audit log               |
+| 9   | **Restock**                | `+qty`   | —          | `restock`         | `+qty` / `0`                    | Admin action + audit log               |
+| 10  | **Damage / write-off**     | `-qty`   | —          | `damaged`         | `-qty` / `0`                    | Admin action + audit log               |
 
 **Events 4, 5 and 6 are mutually exclusive and each fires at most once.**
-`by_order_variant_reason` lets the release path ask *"has a `release` movement already been written
-for this (order, variant)?"* in one indexed read. If a cancellation and an expiry sweep race, the
+`by_order_variant_reason` lets the release path ask _"has a `release` movement already been written
+for this (order, variant)?"_ in one indexed read. If a cancellation and an expiry sweep race, the
 second one's read hits the first's movement, aborts, retries, then sees it and no-ops. **Stock can
 never be released twice.**
 
@@ -489,6 +495,7 @@ productImages: defineTable({
 ```
 
 **Invariants**
+
 - Only `cloudinaryPublicId` is stored. **No full URLs are persisted** — clients build transformed
   URLs (`f_auto,q_auto,w_800`) so delivery is optimised and no CDN URL becomes a stale dependency.
 - Exactly one `isPrimary` per product, enforced by reading the product's images via
@@ -521,6 +528,7 @@ cartItems: defineTable({
 ```
 
 **Invariants**
+
 - `[U]` One cart per user: `withIndex("by_user").unique()` then insert — §1.2 pattern. A race
   between "first add to cart" on two devices aborts one insert rather than creating two carts.
 - `cartId` is always resolved from the authenticated user. A client-supplied `cartId` is ignored.
@@ -545,6 +553,7 @@ wishlistItems: defineTable({
 ```
 
 **Invariants**
+
 - `[U]` Save/remove reads `by_user_product` and patches-or-inserts in one transaction, so a
   double-tap cannot create a duplicate row.
 
@@ -582,6 +591,7 @@ couponRedemptions: defineTable({
 ```
 
 **Invariants — re-evaluated server-side at checkout, always, from scratch**
+
 1. `[U]` `code` unique (uppercased before the read) — §1.2 pattern.
 2. `isActive === true`.
 3. `startsAt <= now < endsAt` (when `endsAt` is set). `now` is passed in, not `Date.now()` (§1.3).
@@ -686,59 +696,59 @@ orderItems: defineTable({
 
 #### 3.11.1 Idempotency — full specification
 
-| Aspect | Decision |
-|---|---|
-| **Scope** | **Per user.** Keyed by `(userId, idempotencyKey)`, not globally. Two different users may legitimately generate the same UUID; scoping prevents cross-user collisions and prevents user A from reading user B's order via a guessed key. |
-| **Format** | Client-generated UUID v4, created when the user opens the checkout screen. Stable across retries. |
-| **Lifecycle** | Written once, never modified. Retained as long as the order. |
-| **Lookup** | `withIndex("by_user_idempotencyKey", q => q.eq("userId", uid).eq("idempotencyKey", key)).unique()` — the index range is recorded, so a concurrent insert conflicts. |
-| **Concurrent duplicate** | Two `placeOrder` calls with the same key: both read the range and find nothing; both try to insert; the second **aborts on OCC**, retries, re-reads, finds the committed order, and returns it. **Exactly one order, exactly one stock reservation.** |
-| **Retry behaviour** | Returns the existing order with a flag `replayed: true`. The client treats it as success. |
-| **Scope of the key** | Covers the entire checkout operation. A *changed* cart must generate a **new** key; reusing a key with different contents returns the original order, by design. |
-| **Failure mode if omitted** | `idempotencyKey` is **required** for `placeOrder`, not optional. An omitted key is an argument-validation error. |
+| Aspect                      | Decision                                                                                                                                                                                                                                              |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Scope**                   | **Per user.** Keyed by `(userId, idempotencyKey)`, not globally. Two different users may legitimately generate the same UUID; scoping prevents cross-user collisions and prevents user A from reading user B's order via a guessed key.               |
+| **Format**                  | Client-generated UUID v4, created when the user opens the checkout screen. Stable across retries.                                                                                                                                                     |
+| **Lifecycle**               | Written once, never modified. Retained as long as the order.                                                                                                                                                                                          |
+| **Lookup**                  | `withIndex("by_user_idempotencyKey", q => q.eq("userId", uid).eq("idempotencyKey", key)).unique()` — the index range is recorded, so a concurrent insert conflicts.                                                                                   |
+| **Concurrent duplicate**    | Two `placeOrder` calls with the same key: both read the range and find nothing; both try to insert; the second **aborts on OCC**, retries, re-reads, finds the committed order, and returns it. **Exactly one order, exactly one stock reservation.** |
+| **Retry behaviour**         | Returns the existing order with a flag `replayed: true`. The client treats it as success.                                                                                                                                                             |
+| **Scope of the key**        | Covers the entire checkout operation. A _changed_ cart must generate a **new** key; reusing a key with different contents returns the original order, by design.                                                                                      |
+| **Failure mode if omitted** | `idempotencyKey` is **required** for `placeOrder`, not optional. An omitted key is an argument-validation error.                                                                                                                                      |
 
 **Why the index alone is not enough:** as established in §1.2, the index gives an O(log n) lookup.
-The guarantee comes from the lookup happening *inside the same mutation* as the insert.
+The guarantee comes from the lookup happening _inside the same mutation_ as the insert.
 
 #### 3.11.2 Order number generation — avoiding a hot document
 
 Order numbers must be human-readable and unique. The naive counter is exactly the hot-document
 anti-pattern Convex warns about (§1.3).
 
-| Approach | Verdict |
-|---|---|
-| Single global counter document | ❌ **Rejected.** Every checkout writes the same row → serialised, OCC conflicts, retry storms. |
-| **Sharded daily counter** | ✅ **Chosen.** `orderSequences: { day: "20261010", lastValue: number }`. Contention is bounded to one row per day; peak checkout volume per day is far below Convex's mutation throughput limits. |
-| Random suffix | ✅ Acceptable fallback if sharding ever proves insufficient. |
+| Approach                       | Verdict                                                                                                                                                                                           |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Single global counter document | ❌ **Rejected.** Every checkout writes the same row → serialised, OCC conflicts, retry storms.                                                                                                    |
+| **Sharded daily counter**      | ✅ **Chosen.** `orderSequences: { day: "20261010", lastValue: number }`. Contention is bounded to one row per day; peak checkout volume per day is far below Convex's mutation throughput limits. |
+| Random suffix                  | ✅ Acceptable fallback if sharding ever proves insufficient.                                                                                                                                      |
 
 Generation happens inside `placeOrder`, reads `by_day`, increments, patches — one transaction with
 the order insert. `[U]` guaranteed by the same read-then-write pattern: the day-sequence row is read
-*and written* in the same transaction, so two concurrent checkouts on the same day conflict, retry,
+_and written_ in the same transaction, so two concurrent checkouts on the same day conflict, retry,
 and receive distinct numbers.
 
 #### 3.11.3 The checkout transaction
 
 `placeOrder` is one Convex mutation. `now` is an **argument**, not `Date.now()` (§1.3).
 
-| Step | Action | Abort condition |
-|---|---|---|
-| 0 | `requireUser`; resolve `users` row | Unauthenticated / suspended / no user row |
-| 0a | **Idempotency check.** Look up `(userId, key)`. If found → return that order with `replayed: true` and **stop** | — |
-| 1 | Load the cart via `by_user` | No cart / empty cart |
-| 2 | Load `cartItems` via `by_cart`; load each variant; load each product | — |
-| 3 | Load each `inventoryLevels` via `by_variant` | Missing level row |
-| 4 | **Validate availability** | `variant.isActive === false`, `product.status !== "active"`, or `available < quantity` |
-| 5 | **Recompute `unitPriceMinor` from the variant.** Client-supplied prices are discarded entirely | `priceMinor <= 0` |
-| 6 | Re-evaluate the coupon from scratch (§3.10) | Any coupon condition fails → fail loudly, do not silently drop |
-| 7 | Compute delivery fee and tax from server config | — |
-| 8 | Derive `totalMinor`; assert `totalMinor >= 0` | Negative total |
-| 9 | Allocate `orderNumber` via the sharded daily sequence (§3.11.2) | Sequence collision → retry |
-| 10 | Insert the `orders` row | — |
-| 11 | Insert all `orderItems` rows | — |
-| 12 | For each line: `reserved += qty` and insert an `inventoryMovements` row with `reason: "reserve"` | `available` check |
-| 13 | Delete the `cartItems` rows | — |
-| 14 | Insert `couponRedemptions` if a coupon applied | Limit re-check |
-| 15 | Set `reservationExpiresAt = now + RESERVATION_TTL_MS` for card orders | — |
+| Step | Action                                                                                                          | Abort condition                                                                        |
+| ---- | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| 0    | `requireUser`; resolve `users` row                                                                              | Unauthenticated / suspended / no user row                                              |
+| 0a   | **Idempotency check.** Look up `(userId, key)`. If found → return that order with `replayed: true` and **stop** | —                                                                                      |
+| 1    | Load the cart via `by_user`                                                                                     | No cart / empty cart                                                                   |
+| 2    | Load `cartItems` via `by_cart`; load each variant; load each product                                            | —                                                                                      |
+| 3    | Load each `inventoryLevels` via `by_variant`                                                                    | Missing level row                                                                      |
+| 4    | **Validate availability**                                                                                       | `variant.isActive === false`, `product.status !== "active"`, or `available < quantity` |
+| 5    | **Recompute `unitPriceMinor` from the variant.** Client-supplied prices are discarded entirely                  | `priceMinor <= 0`                                                                      |
+| 6    | Re-evaluate the coupon from scratch (§3.10)                                                                     | Any coupon condition fails → fail loudly, do not silently drop                         |
+| 7    | Compute delivery fee and tax from server config                                                                 | —                                                                                      |
+| 8    | Derive `totalMinor`; assert `totalMinor >= 0`                                                                   | Negative total                                                                         |
+| 9    | Allocate `orderNumber` via the sharded daily sequence (§3.11.2)                                                 | Sequence collision → retry                                                             |
+| 10   | Insert the `orders` row                                                                                         | —                                                                                      |
+| 11   | Insert all `orderItems` rows                                                                                    | —                                                                                      |
+| 12   | For each line: `reserved += qty` and insert an `inventoryMovements` row with `reason: "reserve"`                | `available` check                                                                      |
+| 13   | Delete the `cartItems` rows                                                                                     | —                                                                                      |
+| 14   | Insert `couponRedemptions` if a coupon applied                                                                  | Limit re-check                                                                         |
+| 15   | Set `reservationExpiresAt = now + RESERVATION_TTL_MS` for card orders                                           | —                                                                                      |
 
 Because the whole function is one serializable transaction, steps 10–15 either all commit or none
 do. A conflict (two buyers racing for the last unit) aborts and retries the **entire** mutation —
@@ -756,15 +766,15 @@ pending_payment ──(payment webhook)──► confirmed ──► preparing �
                                                                    [after dispatch: return]
 ```
 
-| Transition | Who | Side effects |
-|---|---|---|
-| `pending_payment → confirmed` | **Verified webhook only** | — |
-| `pending_payment → cancelled` | Customer (own order) or admin | `release` movement |
-| `pending_payment → cancelled` (expiry) | Scheduled sweep | `release` movement (guarded, §3.6.2) |
-| `confirmed → preparing` | Admin | — |
-| `preparing → out_for_delivery` | Admin | `commit` movement (`onHand -= qty`) |
-| `out_for_delivery → delivered` | Admin | Sets `deliveredAt` |
-| `delivered → (refund)` | Admin | `return` movement if restocked |
+| Transition                             | Who                           | Side effects                         |
+| -------------------------------------- | ----------------------------- | ------------------------------------ |
+| `pending_payment → confirmed`          | **Verified webhook only**     | —                                    |
+| `pending_payment → cancelled`          | Customer (own order) or admin | `release` movement                   |
+| `pending_payment → cancelled` (expiry) | Scheduled sweep               | `release` movement (guarded, §3.6.2) |
+| `confirmed → preparing`                | Admin                         | —                                    |
+| `preparing → out_for_delivery`         | Admin                         | `commit` movement (`onHand -= qty`)  |
+| `out_for_delivery → delivered`         | Admin                         | Sets `deliveredAt`                   |
+| `delivered → (refund)`                 | Admin                         | `return` movement if restocked       |
 
 A customer may cancel **only** their own order and **only** before `preparing`. Everything else
 requires `requireAdmin()`. Every transition writes an `auditLogs` row.
@@ -824,25 +834,25 @@ to exactly one `payments` row. Implemented with the §1.2 read-then-write patter
 
 #### 3.12.3 Webhook handling — verified signature, idempotent, replay-safe
 
-| Requirement | Implementation |
-|---|---|
-| **Signature first** | Verify the provider signature **before parsing the body**. Read `request.text()` once, verify against that exact raw string, then parse. Re-serialising a parsed body and verifying that is a classic bypass. |
-| **Constant-time compare** | Timing-safe comparison of the computed and received signatures. |
-| **Timestamp tolerance** | Reject events outside a tolerance window (e.g. 5 min) to block replay. |
-| **Duplicate delivery** | Lookup `by_providerRef`. If a `payments` row already exists for this event, no-op and return 200. Payment providers **guarantee at-least-once** delivery, so duplicates are normal, not exceptional. |
-| **Unknown reference** | Do **not** create a payment. Record and return 200 so the provider stops retrying; surface for manual review. Creating a row from an unknown event is how fraudulent state gets created. |
-| **Amount mismatch** | If the provider amount ≠ `orders.totalMinor`, mark the payment `failed`, record `failureCode: "AMOUNT_MISMATCH"`, and **do not** mark the order paid. Alert. |
-| **Ordering** | A `refunded`/`failed` event arriving before its `captured` event must not regress state. Transitions are validated against an explicit adjacency map; out-of-order events are recorded and ignored, not applied. |
+| Requirement               | Implementation                                                                                                                                                                                                   |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Signature first**       | Verify the provider signature **before parsing the body**. Read `request.text()` once, verify against that exact raw string, then parse. Re-serialising a parsed body and verifying that is a classic bypass.    |
+| **Constant-time compare** | Timing-safe comparison of the computed and received signatures.                                                                                                                                                  |
+| **Timestamp tolerance**   | Reject events outside a tolerance window (e.g. 5 min) to block replay.                                                                                                                                           |
+| **Duplicate delivery**    | Lookup `by_providerRef`. If a `payments` row already exists for this event, no-op and return 200. Payment providers **guarantee at-least-once** delivery, so duplicates are normal, not exceptional.             |
+| **Unknown reference**     | Do **not** create a payment. Record and return 200 so the provider stops retrying; surface for manual review. Creating a row from an unknown event is how fraudulent state gets created.                         |
+| **Amount mismatch**       | If the provider amount ≠ `orders.totalMinor`, mark the payment `failed`, record `failureCode: "AMOUNT_MISMATCH"`, and **do not** mark the order paid. Alert.                                                     |
+| **Ordering**              | A `refunded`/`failed` event arriving before its `captured` event must not regress state. Transitions are validated against an explicit adjacency map; out-of-order events are recorded and ignored, not applied. |
 
 #### 3.12.4 Refund rules
 
-| Rule | Detail |
-|---|---|
-| Authority | `requireAdmin()` + `auditLogs` row in the same transaction |
-| Cumulative cap | `sum(refunds.amountMinor) + newAmount <= payments.amountMinor`, read inside the transaction |
-| Never negative | A refund may not exceed the captured amount |
-| Provider truth | Refund state is driven by the provider's webhook, not by the local mutation's return value. The mutation records intent; the webhook confirms. |
-| Stock | A refund does **not** automatically restock. Restocking is a separate, explicit admin action (`return` movement) — returned goods must be inspected first. |
+| Rule           | Detail                                                                                                                                                     |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Authority      | `requireAdmin()` + `auditLogs` row in the same transaction                                                                                                 |
+| Cumulative cap | `sum(refunds.amountMinor) + newAmount <= payments.amountMinor`, read inside the transaction                                                                |
+| Never negative | A refund may not exceed the captured amount                                                                                                                |
+| Provider truth | Refund state is driven by the provider's webhook, not by the local mutation's return value. The mutation records intent; the webhook confirms.             |
+| Stock          | A refund does **not** automatically restock. Restocking is a separate, explicit admin action (`return` movement) — returned goods must be inspected first. |
 
 ### 3.13 `auditLogs`
 
@@ -865,6 +875,7 @@ auditLogs: defineTable({
 ```
 
 **Invariants**
+
 - Written inside the same mutation as the privileged change.
 - Never updated or deleted. There is no update function for this table.
 
@@ -872,20 +883,20 @@ auditLogs: defineTable({
 
 ## 4. Index budget (verified limit: 32 per table, 16 fields per index)
 
-| Table | Regular | Search | Total | Fields/index max | Limit 32 |
-|---|---|---|---|---|---|
-| `products` | 4 | 1 | 5 | 2 | OK |
-| `productVariants` | 2 | 0 | 2 | 2 | OK |
-| `inventoryMovements` | 3 | 0 | 3 | 3 | OK |
-| `inventoryLevels` | 1 | 0 | 1 | 1 | OK |
-| `cartItems` | 2 | 0 | 2 | 2 | OK |
-| `wishlistItems` | 2 | 0 | 2 | 2 | OK |
-| `couponRedemptions` | 2 | 0 | 2 | 2 | OK |
-| `orders` | 5 | 0 | 5 | 2 | OK |
-| `payments` | 3 | 0 | 3 | 2 | OK |
-| `productImages` | 2 | 0 | 2 | 2 | OK |
-| `addresses` | 2 | 0 | 2 | 2 | OK |
-| all others | ≤ 3 | 0 | ≤ 3 | ≤ 2 | OK |
+| Table                | Regular | Search | Total | Fields/index max | Limit 32 |
+| -------------------- | ------- | ------ | ----- | ---------------- | -------- |
+| `products`           | 4       | 1      | 5     | 2                | OK       |
+| `productVariants`    | 2       | 0      | 2     | 2                | OK       |
+| `inventoryMovements` | 3       | 0      | 3     | 3                | OK       |
+| `inventoryLevels`    | 1       | 0      | 1     | 1                | OK       |
+| `cartItems`          | 2       | 0      | 2     | 2                | OK       |
+| `wishlistItems`      | 2       | 0      | 2     | 2                | OK       |
+| `couponRedemptions`  | 2       | 0      | 2     | 2                | OK       |
+| `orders`             | 5       | 0      | 5     | 2                | OK       |
+| `payments`           | 3       | 0      | 3     | 2                | OK       |
+| `productImages`      | 2       | 0      | 2     | 2                | OK       |
+| `addresses`          | 2       | 0      | 2     | 2                | OK       |
+| all others           | ≤ 3     | 0      | ≤ 3   | ≤ 2              | OK       |
 
 No table approaches the 32-index or 16-field limits.
 
@@ -893,25 +904,25 @@ No table approaches the 32-index or 16-field limits.
 
 ## 5. Query → Index mapping
 
-| Query | Index used | Bounded? |
-|---|---|---|
-| Product by slug (public) | `products.by_slug` | Yes |
-| Catalog page filtered by category | `products.by_category_status` | `.paginate()` |
-| Catalog sorted newest | `products.by_status_createdAt` | `.paginate()` |
-| Search + category filter | `products.search_products` | `.take()` — **own cap**, see §1.5 |
-| Typeahead suggestions | `products.search_products` | `.take(8)` |
-| Variants for a product | `productVariants.by_product` | Yes |
-| Stock for N variants | `inventoryLevels.by_variant` | N point reads |
-| Cart lines | `cartItems.by_cart` | User-bounded |
-| "Is this variant in the cart?" | `cartItems.by_cart_variant` | Yes |
-| Duplicate wishlist guard | `wishlistItems.by_user_product` | Yes |
-| Order history (paged) | `orders.by_user_createdAt` | `.paginate()` |
-| Admin order queue by status | `orders.by_status_createdAt` | `.paginate()` |
-| Expiring reservations | `orders.by_status_reservationExpiry` | Scheduled batch |
-| Idempotency lookup | `orders.by_user_idempotencyKey` | Yes |
-| Per-user coupon usage | `couponRedemptions.by_coupon_user` | Yes |
-| Has this reservation been released? | `inventoryMovements.by_order_variant_reason` | Yes |
-| Payment webhook dedup | `payments.by_providerRef` | Yes |
+| Query                               | Index used                                   | Bounded?                          |
+| ----------------------------------- | -------------------------------------------- | --------------------------------- |
+| Product by slug (public)            | `products.by_slug`                           | Yes                               |
+| Catalog page filtered by category   | `products.by_category_status`                | `.paginate()`                     |
+| Catalog sorted newest               | `products.by_status_createdAt`               | `.paginate()`                     |
+| Search + category filter            | `products.search_products`                   | `.take()` — **own cap**, see §1.5 |
+| Typeahead suggestions               | `products.search_products`                   | `.take(8)`                        |
+| Variants for a product              | `productVariants.by_product`                 | Yes                               |
+| Stock for N variants                | `inventoryLevels.by_variant`                 | N point reads                     |
+| Cart lines                          | `cartItems.by_cart`                          | User-bounded                      |
+| "Is this variant in the cart?"      | `cartItems.by_cart_variant`                  | Yes                               |
+| Duplicate wishlist guard            | `wishlistItems.by_user_product`              | Yes                               |
+| Order history (paged)               | `orders.by_user_createdAt`                   | `.paginate()`                     |
+| Admin order queue by status         | `orders.by_status_createdAt`                 | `.paginate()`                     |
+| Expiring reservations               | `orders.by_status_reservationExpiry`         | Scheduled batch                   |
+| Idempotency lookup                  | `orders.by_user_idempotencyKey`              | Yes                               |
+| Per-user coupon usage               | `couponRedemptions.by_coupon_user`           | Yes                               |
+| Has this reservation been released? | `inventoryMovements.by_order_variant_reason` | Yes                               |
+| Payment webhook dedup               | `payments.by_providerRef`                    | Yes                               |
 
 **No `.collect()` on an unbounded set anywhere.** `.collect()` appears only where a single user's
 ownership bounds the result (their addresses, their wishlist).
@@ -920,12 +931,12 @@ ownership bounds the result (their addresses, their wishlist).
 
 ## 6. Pagination policy
 
-| Surface | Strategy |
-|---|---|
-| Catalog, order history, admin tables | `paginationOptsValidator` + `.paginate()`, surfaced through Convex's `usePaginatedQuery`. |
-| Search results | `.paginate()` **plus** an explicit application-level cap. `maximumRowsRead`/`maximumBytesRead` are **not enforced for search queries** (§1.5). |
-| Typeahead | `.take(8)` — never paginated. |
-| Cart / wishlist / addresses | Single-user bounded; `.take(n)` with a documented ceiling. |
+| Surface                              | Strategy                                                                                                                                       |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Catalog, order history, admin tables | `paginationOptsValidator` + `.paginate()`, surfaced through Convex's `usePaginatedQuery`.                                                      |
+| Search results                       | `.paginate()` **plus** an explicit application-level cap. `maximumRowsRead`/`maximumBytesRead` are **not enforced for search queries** (§1.5). |
+| Typeahead                            | `.take(8)` — never paginated.                                                                                                                  |
+| Cart / wishlist / addresses          | Single-user bounded; `.take(n)` with a documented ceiling.                                                                                     |
 
 Every paginated query sets `maximumBytesRead` / `maximumRowsRead` **where Convex enforces them**, and
 additionally enforces its own cap in application code where it does not.
@@ -934,14 +945,14 @@ additionally enforces its own cap in application code where it does not.
 
 ## 7. Data retention
 
-| Data | Policy |
-|---|---|
-| Orders, order items, payments, refunds | Retained indefinitely. Financial record. |
-| `auditLogs` | Retained indefinitely. |
-| `inventoryMovements` | Retained indefinitely. Reconciliation. |
-| Addresses | User-deletable; the snapshot inside the order survives deletion. |
-| Carts | Abandoned carts older than 30 days are purgeable by a scheduled mutation. |
-| Expired `pending_payment` orders | Released by the scheduled sweep; rows retained as financial records. |
+| Data                                   | Policy                                                                    |
+| -------------------------------------- | ------------------------------------------------------------------------- |
+| Orders, order items, payments, refunds | Retained indefinitely. Financial record.                                  |
+| `auditLogs`                            | Retained indefinitely.                                                    |
+| `inventoryMovements`                   | Retained indefinitely. Reconciliation.                                    |
+| Addresses                              | User-deletable; the snapshot inside the order survives deletion.          |
+| Carts                                  | Abandoned carts older than 30 days are purgeable by a scheduled mutation. |
+| Expired `pending_payment` orders       | Released by the scheduled sweep; rows retained as financial records.      |
 
 ---
 
@@ -961,34 +972,34 @@ window with the previous deployment still live.
 
 ### 8.2 Unresolved business decisions
 
-| ID | Decision | Status | Blocks |
-|---|---|---|---|
+| ID     | Decision                                                                                                                           | Status  | Blocks                                                                                                                  |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------- |
 | **D1** | **Target currency.** `v.literal("USD")` removed in favour of validated `v.string()` + config allowlist (§1.4). Default unresolved. | ❓ Open | Display formatting, payment gateway. EGP vs USD is a **value change, not a schema migration** — deliberately de-risked. |
-| **D2** | **Tax model.** VAT inclusive in displayed price, or added at checkout? | ❓ Open | Pricing engine, cart UI layout (whether a tax line renders). |
-| **D3** | **Reservation TTL.** Expiry window for `pending_payment` card orders. Suggested default 30 min; needs commercial sign-off. | ❓ Open | Checkout copy, sweep schedule. |
-| **D4** | **Admin tiers.** Single `admin` role vs. `staff`/`superadmin`. | ❓ Open | RBAC table growth; guard design is unaffected. |
-| **D5** | **Payment provider.** Stripe assumed. | ❓ Open | Phase F. |
-| **D6** | **Refund policy** and who may issue refunds. | ❓ Open | Refund mutations. |
+| **D2** | **Tax model.** VAT inclusive in displayed price, or added at checkout?                                                             | ❓ Open | Pricing engine, cart UI layout (whether a tax line renders).                                                            |
+| **D3** | **Reservation TTL.** Expiry window for `pending_payment` card orders. Suggested default 30 min; needs commercial sign-off.         | ❓ Open | Checkout copy, sweep schedule.                                                                                          |
+| **D4** | **Admin tiers.** Single `admin` role vs. `staff`/`superadmin`.                                                                     | ❓ Open | RBAC table growth; guard design is unaffected.                                                                          |
+| **D5** | **Payment provider.** Stripe assumed.                                                                                              | ❓ Open | Phase F.                                                                                                                |
+| **D6** | **Refund policy** and who may issue refunds.                                                                                       | ❓ Open | Refund mutations.                                                                                                       |
 
 ### 8.3 Operational edge cases — resolution summary
 
-| Edge case | Resolution |
-|---|---|
-| Price changes mid-checkout | §3.4 — checkout re-reads variant price in-transaction; OCC forces consistency. |
-| Product archived mid-checkout | §3.11.3 step 4 — checkout aborts with a per-line reason; the cart surfaces it rather than failing opaquely. |
-| Coupon invalid at checkout | §3.10 — re-evaluated from scratch; failure is explicit, never a silent drop. |
-| Coupon race (§ usageLimit) | §3.10 — safe **only** because the count read and redemption insert share a transaction. |
-| Multiple carts / double add | §3.8 — one cart per user, one line per variant, both via §1.2. |
-| Two default addresses | §3.2 — whole-set read + patch in one transaction; last writer wins, exactly one default. |
-| Two primary product images | §3.7 — same pattern. |
-| Concurrent cancellation + expiry | §3.6.2 — `by_order_variant_reason` guard makes release exactly-once. |
-| Double-tap "place order" | §3.11.1 — required idempotency key; second call replays. |
-| Concurrent cancellation of one order | §3.11.4 — transition validated against the adjacency map; second call is a no-op returning the current status. |
-| Webhook redelivery | §3.12.3 — provider-ref dedup, returns 200. |
-| Webhook arrives out of order | §3.12.3 — adjacency map prevents state regression. |
-| Amount mismatch on webhook | §3.12.3 — fail + alert, never mark paid. |
+| Edge case                            | Resolution                                                                                                             |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| Price changes mid-checkout           | §3.4 — checkout re-reads variant price in-transaction; OCC forces consistency.                                         |
+| Product archived mid-checkout        | §3.11.3 step 4 — checkout aborts with a per-line reason; the cart surfaces it rather than failing opaquely.            |
+| Coupon invalid at checkout           | §3.10 — re-evaluated from scratch; failure is explicit, never a silent drop.                                           |
+| Coupon race (§ usageLimit)           | §3.10 — safe **only** because the count read and redemption insert share a transaction.                                |
+| Multiple carts / double add          | §3.8 — one cart per user, one line per variant, both via §1.2.                                                         |
+| Two default addresses                | §3.2 — whole-set read + patch in one transaction; last writer wins, exactly one default.                               |
+| Two primary product images           | §3.7 — same pattern.                                                                                                   |
+| Concurrent cancellation + expiry     | §3.6.2 — `by_order_variant_reason` guard makes release exactly-once.                                                   |
+| Double-tap "place order"             | §3.11.1 — required idempotency key; second call replays.                                                               |
+| Concurrent cancellation of one order | §3.11.4 — transition validated against the adjacency map; second call is a no-op returning the current status.         |
+| Webhook redelivery                   | §3.12.3 — provider-ref dedup, returns 200.                                                                             |
+| Webhook arrives out of order         | §3.12.3 — adjacency map prevents state regression.                                                                     |
+| Amount mismatch on webhook           | §3.12.3 — fail + alert, never mark paid.                                                                               |
 | Reservation expiry sweep vs. payment | §3.6.2 — both paths guard on the same `(orderId, variantId)` movement; whichever commits first wins, the other no-ops. |
-| Carts holding stock | §3.6.4 — deliberately **not** reserved; surfaced honestly at checkout. |
+| Carts holding stock                  | §3.6.4 — deliberately **not** reserved; surfaced honestly at checkout.                                                 |
 
 ---
 
@@ -997,4 +1008,3 @@ window with the previous deployment still live.
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) — stack, layering, testing, deployment
 - [`SECURITY.md`](./SECURITY.md) — threat model, authorization matrix, secrets
 - [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md) — phases, gates, blockers
-

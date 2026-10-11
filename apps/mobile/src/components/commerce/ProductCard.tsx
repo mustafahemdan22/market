@@ -101,11 +101,7 @@ export function ProductCard({ product, onPress, style }: ProductCardProps) {
         </Text>
 
         {/* Title */}
-        <Text
-          variant="h3"
-          numberOfLines={2}
-          style={styles.title}
-        >
+        <Text variant="h3" numberOfLines={2} style={styles.title}>
           {productName}
         </Text>
 
@@ -157,13 +153,7 @@ export function ProductCard({ product, onPress, style }: ProductCardProps) {
               variant="secondary"
               size="sm"
               fullWidth
-              leftIcon={
-                <MaterialCommunityIcons
-                  name="plus"
-                  size={16}
-                  color={colors.brand[600]}
-                />
-              }
+              leftIcon={<MaterialCommunityIcons name="plus" size={16} color={colors.brand[600]} />}
             />
           )}
         </View>

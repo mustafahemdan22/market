@@ -133,14 +133,27 @@ export const ar: TranslationDictionary = {
   "auth.errorPasswordMismatch": "كلمتا المرور غير متطابقتين",
   "auth.errorCodeRequired": "يرجى إدخال رمز التحقق",
   "auth.errorGeneric": "فشل تسجيل الدخول. يرجى التحقق من البيانات والمحاولة مجدداً.",
-  "auth.errorInvalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة. يرجى المحاولة ثانية.",
+  "auth.errorInvalidCredentials":
+    "البريد الإلكتروني أو كلمة المرور غير صحيحة. يرجى المحاولة ثانية.",
   "auth.errorUserExists": "يوجد حساب مسجل بهذا البريد الإلكتروني بالفعل. جرب تسجيل الدخول.",
   "auth.errorInvalidCode": "رمز التحقق غير صحيح أو انتهت صلاحيته. يرجى طلب رمز جديد.",
   "auth.clerkNotConfigured": "خدمة Clerk غير مهيأة بعد",
-  "auth.clerkConfigInstructions": "يرجى تعيين EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY في المتغيرات البيئية لتفعيل المصادقة الحقيقية.",
+  "auth.clerkConfigInstructions":
+    "يرجى تعيين EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY في المتغيرات البيئية لتفعيل المصادقة الحقيقية.",
   "auth.signedInAs": "مسجل الدخول كـ",
   "auth.roleCustomer": "عميل",
   "auth.roleAdmin": "مدير النظام",
+  "auth.errorTitle": "مشكلة في المصادقة",
+  "auth.errorSupportHint":
+    "تعذر تشغيل Clerk. تأكد من صحة EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ومن إمكانية الوصول إلى حساب Clerk، ثم أعد المحاولة.",
+  "auth.sessionEndedTitle": "انتهت الجلسة",
+  "auth.sessionEndedDesc": "انتهت صلاحية جلستك أو تم تسجيل الخروج. يرجى تسجيل الدخول مرة أخرى.",
+  "auth.errorSignOut": "فشل تسجيل الخروج. يرجى المحاولة مرة أخرى.",
+
+  // Data source
+  "data.sampleDataTitle": "?????? ??????",
+  "data.sampleDataBody":
+    "??? ??? ?????? ???????. ???? EXPO_PUBLIC_CONVEX_URL ???? ??????? ???????.",
 
   // Common Actions & States
   "action.retry": "إعادة المحاولة",

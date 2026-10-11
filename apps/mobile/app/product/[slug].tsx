@@ -7,7 +7,7 @@ import { useTheme } from "../../src/theme/ThemeProvider";
 import { useI18n, useFormat } from "../../src/i18n/I18nProvider";
 import { useCartStore } from "../../src/store/cartStore";
 import { useFavoritesStore } from "../../src/store/favoritesStore";
-import { catalogRepository } from "../../src/data/fixtures/fixtureRepository";
+import { catalogRepository } from "../../src/data/catalogService";
 import type { Product, ProductVariant } from "../../src/data/catalogRepository";
 import { HeaderBar } from "../../src/components/commerce/HeaderBar";
 import { ProductImage } from "../../src/components/commerce/ProductImage";
@@ -100,9 +100,7 @@ export default function ProductDetailScreen() {
   const favorited = isFavorite(product.id);
   const alreadyInCart = getItemQuantity(product.id);
 
-  const activePriceMinor = selectedVariant
-    ? selectedVariant.priceMinor
-    : product.priceMinor;
+  const activePriceMinor = selectedVariant ? selectedVariant.priceMinor : product.priceMinor;
 
   const handleAddToCart = () => {
     addItem(product, quantity, selectedVariant?.id);
@@ -163,9 +161,7 @@ export default function ProductDetailScreen() {
                       styles.dot,
                       {
                         backgroundColor:
-                          idx === selectedImageIndex
-                            ? colors.brand[600]
-                            : colors.neutral[300],
+                          idx === selectedImageIndex ? colors.brand[600] : colors.neutral[300],
                       },
                     ]}
                   />
@@ -176,12 +172,7 @@ export default function ProductDetailScreen() {
 
           {/* Product Header Information */}
           <View style={styles.sectionPadding}>
-            <View
-              style={[
-                styles.originRow,
-                { flexDirection: isRTL ? "row-reverse" : "row" },
-              ]}
-            >
+            <View style={[styles.originRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
               <Text variant="caption" tone="brand">
                 {origin}
               </Text>
@@ -234,10 +225,7 @@ export default function ProductDetailScreen() {
                   {t("product.selectVariant")}
                 </Text>
                 <View
-                  style={[
-                    styles.variantsRow,
-                    { flexDirection: isRTL ? "row-reverse" : "row" },
-                  ]}
+                  style={[styles.variantsRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}
                 >
                   {product.variants.map((v) => (
                     <Chip
@@ -306,8 +294,8 @@ export default function ProductDetailScreen() {
                 !product.inStock
                   ? t("product.outOfStock")
                   : alreadyInCart > 0
-                  ? t("product.addedToCart")
-                  : t("product.addToCart")
+                    ? t("product.addedToCart")
+                    : t("product.addToCart")
               }
               onPress={handleAddToCart}
               disabled={!product.inStock}
@@ -315,11 +303,7 @@ export default function ProductDetailScreen() {
               fullWidth
               leftIcon={
                 product.inStock ? (
-                  <MaterialCommunityIcons
-                    name="basket-plus"
-                    size={20}
-                    color={colors.neutral[0]}
-                  />
+                  <MaterialCommunityIcons name="basket-plus" size={20} color={colors.neutral[0]} />
                 ) : undefined
               }
             />

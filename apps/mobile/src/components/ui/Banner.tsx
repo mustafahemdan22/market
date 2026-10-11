@@ -14,12 +14,7 @@ export interface BannerProps {
   readonly style?: StyleProp<ViewStyle>;
 }
 
-export function Banner({
-  message,
-  tone = "info",
-  iconName,
-  style,
-}: BannerProps) {
+export function Banner({ message, tone = "info", iconName, style }: BannerProps) {
   const { colors } = useTheme();
   const { isRTL } = useI18n();
 
@@ -64,11 +59,7 @@ export function Banner({
       accessibilityRole="text"
     >
       <View style={styles.iconSlot}>
-        <MaterialCommunityIcons
-          name={iconName ?? defaultIcon}
-          size={18}
-          color={iconColor}
-        />
+        <MaterialCommunityIcons name={iconName ?? defaultIcon} size={18} color={iconColor} />
       </View>
       <View style={styles.textContainer}>
         <Text variant="caption" tone="primary">

@@ -21,28 +21,28 @@
 
 ## 2. Threat Model
 
-| # | Threat | Control | Verified by |
-|---|---|---|---|
-| T1 | Anonymous user calls a protected mutation | Auth guard rejects when `getUserIdentity()` is null | P0 authz tests |
-| T2 | User A reads/edits User B's cart, address, or order | Ownership check: `doc.userId !== userId` ⇒ throw, on **every** row access | P0 authz tests |
-| T3 | Client sends a fake `priceMinor` to reduce the total | Checkout recomputes `unitPrice` from `productVariants`; client arg is never read | P0 pricing tests |
-| T4 | Client claims `role: "admin"` | `role` is not a function argument anywhere; it lives in `users` and is set by webhook/allowlist or admin mutation | Compile-time (no such arg exists) + P0 test |
-| T5 | Client over-requests stock to oversell | Stock decremented only inside the serializable `placeOrder` transaction with a re-read of `inventoryLevels` | Concurrency test |
-| T6 | Double-tap on "Place order" creates two orders | `orders.by_user_idempotencyKey` lookup **inside the same mutation as the insert**. Convex indexes do not enforce uniqueness; the serializable transaction does. | Idempotency test (10 concurrent, same key) |
-| T6b | Concurrent duplicate SKU / slug / coupon-code / order-number / payment-ref writes | Read-then-write in one mutation, reading the exact index range that the insert writes to (`DATA_MODEL.md` §1.2) | Uniqueness test suite |
-| T6c | Coupon global usage limit exceeded by racing checkouts | Redemption count read via `by_coupon` in-transaction; insert writes the same range ⇒ OCC forces re-read | Coupon race test (10 concurrent, limit 3) |
-| T6d | Reservation released twice (cancel racing expiry sweep) | `inventoryMovements.by_order_variant_reason` guard makes `release` exactly-once | Release-exactly-once test |
-| T7 | Forged Clerk webhook promotes a user to admin | Svix signature verified before parsing; `role` assigned only from a server-side allowlist | P0 webhook test |
-| T8 | Forged payment webhook marks an order paid | Provider signature verified with a constant-time compare before any mutation | P0 webhook test |
-| T9 | `api_secret` leaks into the mobile bundle | Secret exists only in Convex env; client receives a short-lived signature | Build-output grep in CI |
-| T10 | Unsigned Cloudinary upload used to host arbitrary files | Uploads are **signed**; the server decides which params are signable | Signed-upload test |
-| T11 | A suspended user places an order | Guard checks `users.status !== "suspended"` | P0 test |
-| T12 | IDOR through a guessed `_id` | Convex `_id`s are not sequential/guessable, **and** ownership is checked regardless | P0 test |
-| T13 | Admin UI hidden button bypassed by direct API call | Every admin function calls `requireAdmin()`; the UI check is cosmetic | P0 test |
-| T14 | Coupon abuse via racing checkout | Redemption counts re-read inside the checkout transaction | Concurrency test |
-| T15 | Secrets in git history | `.gitignore` + CI secret scan | CI |
-| T16 | Cost/DoS via unbounded queries | No `.collect()` on unbounded sets; pagination caps rows read | Code review + lint rule |
-| T17 | Stale cart coupon grants an invalid discount | Coupon conditions re-evaluated from scratch at checkout | P0 pricing test |
+| #   | Threat                                                                            | Control                                                                                                                                                         | Verified by                                 |
+| --- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| T1  | Anonymous user calls a protected mutation                                         | Auth guard rejects when `getUserIdentity()` is null                                                                                                             | P0 authz tests                              |
+| T2  | User A reads/edits User B's cart, address, or order                               | Ownership check: `doc.userId !== userId` ⇒ throw, on **every** row access                                                                                       | P0 authz tests                              |
+| T3  | Client sends a fake `priceMinor` to reduce the total                              | Checkout recomputes `unitPrice` from `productVariants`; client arg is never read                                                                                | P0 pricing tests                            |
+| T4  | Client claims `role: "admin"`                                                     | `role` is not a function argument anywhere; it lives in `users` and is set by webhook/allowlist or admin mutation                                               | Compile-time (no such arg exists) + P0 test |
+| T5  | Client over-requests stock to oversell                                            | Stock decremented only inside the serializable `placeOrder` transaction with a re-read of `inventoryLevels`                                                     | Concurrency test                            |
+| T6  | Double-tap on "Place order" creates two orders                                    | `orders.by_user_idempotencyKey` lookup **inside the same mutation as the insert**. Convex indexes do not enforce uniqueness; the serializable transaction does. | Idempotency test (10 concurrent, same key)  |
+| T6b | Concurrent duplicate SKU / slug / coupon-code / order-number / payment-ref writes | Read-then-write in one mutation, reading the exact index range that the insert writes to (`DATA_MODEL.md` §1.2)                                                 | Uniqueness test suite                       |
+| T6c | Coupon global usage limit exceeded by racing checkouts                            | Redemption count read via `by_coupon` in-transaction; insert writes the same range ⇒ OCC forces re-read                                                         | Coupon race test (10 concurrent, limit 3)   |
+| T6d | Reservation released twice (cancel racing expiry sweep)                           | `inventoryMovements.by_order_variant_reason` guard makes `release` exactly-once                                                                                 | Release-exactly-once test                   |
+| T7  | Forged Clerk webhook promotes a user to admin                                     | Svix signature verified before parsing; `role` assigned only from a server-side allowlist                                                                       | P0 webhook test                             |
+| T8  | Forged payment webhook marks an order paid                                        | Provider signature verified with a constant-time compare before any mutation                                                                                    | P0 webhook test                             |
+| T9  | `api_secret` leaks into the mobile bundle                                         | Secret exists only in Convex env; client receives a short-lived signature                                                                                       | Build-output grep in CI                     |
+| T10 | Unsigned Cloudinary upload used to host arbitrary files                           | Uploads are **signed**; the server decides which params are signable                                                                                            | Signed-upload test                          |
+| T11 | A suspended user places an order                                                  | Guard checks `users.status !== "suspended"`                                                                                                                     | P0 test                                     |
+| T12 | IDOR through a guessed `_id`                                                      | Convex `_id`s are not sequential/guessable, **and** ownership is checked regardless                                                                             | P0 test                                     |
+| T13 | Admin UI hidden button bypassed by direct API call                                | Every admin function calls `requireAdmin()`; the UI check is cosmetic                                                                                           | P0 test                                     |
+| T14 | Coupon abuse via racing checkout                                                  | Redemption counts re-read inside the checkout transaction                                                                                                       | Concurrency test                            |
+| T15 | Secrets in git history                                                            | `.gitignore` + CI secret scan                                                                                                                                   | CI                                          |
+| T16 | Cost/DoS via unbounded queries                                                    | No `.collect()` on unbounded sets; pagination caps rows read                                                                                                    | Code review + lint rule                     |
+| T17 | Stale cart coupon grants an invalid discount                                      | Coupon conditions re-evaluated from scratch at checkout                                                                                                         | P0 pricing test                             |
 
 ---
 
@@ -78,15 +78,15 @@ export default {
 ```
 
 - `CLERK_JWT_ISSUER_DOMAIN` is set on the **Convex dashboard**, not in the repo.
-  *(Naming note: Convex's own guide calls this `CLERK_JWT_ISSUER_DOMAIN`; Clerk's integration
+  _(Naming note: Convex's own guide calls this `CLERK_JWT_ISSUER_DOMAIN`; Clerk's integration
   guide calls the same value `CLERK_FRONTEND_API_URL`. They hold the same Frontend API URL. We use
-  Convex's name because it is set in the Convex dashboard.)*
+  Convex's name because it is set in the Convex dashboard.)_
 - Dev and production use **different Clerk instances** with different issuer domains, so a token
   minted in dev cannot authenticate against production.
 - Convex caches JWKS automatically and refreshes on unknown `kid`. Signature, `exp`, and `aud`
   are all validated by Convex, not by our code.
 - The Clerk Dashboard's **Convex integration must be activated**, which provisions the `aud:
-  "convex"` claim mapping. Without it, every request is rejected as unauthenticated.
+"convex"` claim mapping. Without it, every request is rejected as unauthenticated.
 - For the mobile app, Clerk's **Native API must be enabled** in the Dashboard, and
   `publishableKey` must be passed **explicitly** to `<ClerkProvider>` — env vars inside
   `node_modules` are not inlined during production React Native builds.
@@ -97,10 +97,10 @@ export default {
 
 ### 3.2 Client wiring
 
-| App | Provider |
-|---|---|
+| App    | Provider                                                                                     |
+| ------ | -------------------------------------------------------------------------------------------- |
 | Mobile | `ClerkProvider` (from `@clerk/expo`) → `ConvexProviderWithClerk` (from `convex/react-clerk`) |
-| Admin | `ClerkProvider` (from `@clerk/nextjs`) → `ConvexProviderWithClerk` |
+| Admin  | `ClerkProvider` (from `@clerk/nextjs`) → `ConvexProviderWithClerk`                           |
 
 `convex` exports `convex/react-clerk`. There is no separate `convex-react` package — a common
 mistake that produces a module-not-found error at startup.
@@ -125,12 +125,13 @@ and closes that window entirely.
 
 ### 4.1 Roles
 
-| Role | Capabilities |
-|---|---|
-| `customer` | Browse, cart, wishlist, own addresses, own orders, checkout |
-| `admin` | All customer capabilities, plus product/inventory/coupon/user/order management |
+| Role       | Capabilities                                                                   |
+| ---------- | ------------------------------------------------------------------------------ |
+| `customer` | Browse, cart, wishlist, own addresses, own orders, checkout                    |
+| `admin`    | All customer capabilities, plus product/inventory/coupon/user/order management |
 
 There is no client-side role. `users.role` is assigned by:
+
 1. The Clerk webhook handler, when the user's Clerk ID appears in the `ADMIN_USER_IDS` server-side
    allowlist (bootstrapping the first admin), or
 2. An `admin`-guarded mutation (promotion/demotion, always audited).
@@ -148,30 +149,30 @@ Every public function's **first statement** is one of these. A lint rule (custom
 
 ### 4.3 Authorization matrix
 
-| Function | Anonymous | Customer | Admin | Notes |
-|---|---|---|---|---|
-| `catalog.listProducts` | ✅ read | ✅ | ✅ | Only `status: "active"` |
-| `catalog.getProduct` | ✅ read | ✅ | ✅ | Same filter |
-| `catalog.search` | ✅ read | ✅ | ✅ | |
-| `cart.get` | ❌ | ✅ own | ✅ own | Resolved by `by_user` index |
-| `cart.addItem` | ❌ | ✅ own | ✅ own | `cartId` derived from user |
-| `cart.updateItem` | ❌ | ✅ own | ✅ own | `requireOwned` |
-| `cart.clear` | ❌ | ✅ own | ✅ own | |
-| `wishlist.*` | ❌ | ✅ own | ✅ own | |
-| `addresses.*` | ❌ | ✅ own | ✅ own | |
-| `orders.placeOrder` | ❌ | ✅ own | ✅ own | Transaction; see §5 |
-| `orders.listMine` | ❌ | ✅ own | ✅ own | Paged |
-| `orders.getById` | ❌ | ✅ own | ✅ any | `requireOwned` unless admin |
-| `orders.updateStatus` | ❌ | ❌ | ✅ | Audited |
-| `orders.refund` | ❌ | ❌ | ✅ | Audited; amount capped |
-| `admin.products.*` | ❌ | ❌ | ✅ | |
-| `admin.inventory.*` | ❌ | ❌ | ✅ | Writes a movement row |
-| `admin.coupons.*` | ❌ | ❌ | ✅ | |
-| `admin.users.setRole` | ❌ | ❌ | ✅ | Cannot demote self; audited |
-| `media.createUploadSignature` | ❌ | ✅ | ✅ | Admin gets product-scoped signature |
-| `media.deleteAsset` | ❌ | ❌ | ✅ | |
-| `webhooks.clerk` | — | — | — | Svix signature verified |
-| `webhooks.payments` | — | — | — | Provider signature verified |
+| Function                      | Anonymous | Customer | Admin  | Notes                               |
+| ----------------------------- | --------- | -------- | ------ | ----------------------------------- |
+| `catalog.listProducts`        | ✅ read   | ✅       | ✅     | Only `status: "active"`             |
+| `catalog.getProduct`          | ✅ read   | ✅       | ✅     | Same filter                         |
+| `catalog.search`              | ✅ read   | ✅       | ✅     |                                     |
+| `cart.get`                    | ❌        | ✅ own   | ✅ own | Resolved by `by_user` index         |
+| `cart.addItem`                | ❌        | ✅ own   | ✅ own | `cartId` derived from user          |
+| `cart.updateItem`             | ❌        | ✅ own   | ✅ own | `requireOwned`                      |
+| `cart.clear`                  | ❌        | ✅ own   | ✅ own |                                     |
+| `wishlist.*`                  | ❌        | ✅ own   | ✅ own |                                     |
+| `addresses.*`                 | ❌        | ✅ own   | ✅ own |                                     |
+| `orders.placeOrder`           | ❌        | ✅ own   | ✅ own | Transaction; see §5                 |
+| `orders.listMine`             | ❌        | ✅ own   | ✅ own | Paged                               |
+| `orders.getById`              | ❌        | ✅ own   | ✅ any | `requireOwned` unless admin         |
+| `orders.updateStatus`         | ❌        | ❌       | ✅     | Audited                             |
+| `orders.refund`               | ❌        | ❌       | ✅     | Audited; amount capped              |
+| `admin.products.*`            | ❌        | ❌       | ✅     |                                     |
+| `admin.inventory.*`           | ❌        | ❌       | ✅     | Writes a movement row               |
+| `admin.coupons.*`             | ❌        | ❌       | ✅     |                                     |
+| `admin.users.setRole`         | ❌        | ❌       | ✅     | Cannot demote self; audited         |
+| `media.createUploadSignature` | ❌        | ✅       | ✅     | Admin gets product-scoped signature |
+| `media.deleteAsset`           | ❌        | ❌       | ✅     |                                     |
+| `webhooks.clerk`              | —         | —        | —      | Svix signature verified             |
+| `webhooks.payments`           | —         | —        | —      | Provider signature verified         |
 
 **Rule:** the admin dashboard's route guards are a UX convenience only. The matrix above is
 enforced in Convex.
@@ -182,17 +183,17 @@ enforced in Convex.
 
 Five independent layers protect the checkout path:
 
-| Layer | Mechanism | Prevents |
-|---|---|---|
-| 1. Auth guard | `requireUser` | Anonymous checkout |
-| 2. Suspension check | `users.status` | Suspended-user checkout |
-| 3. Price recomputation | `unitPrice` read from `productVariants` | Client-supplied price |
+| Layer                       | Mechanism                                     | Prevents                              |
+| --------------------------- | --------------------------------------------- | ------------------------------------- |
+| 1. Auth guard               | `requireUser`                                 | Anonymous checkout                    |
+| 2. Suspension check         | `users.status`                                | Suspended-user checkout               |
+| 3. Price recomputation      | `unitPrice` read from `productVariants`       | Client-supplied price                 |
 | 4. Serializable transaction | Entire Convex mutation is one OCC transaction | Oversell, partial writes, lost update |
-| 5. Idempotency key | Unique `orders.by_idempotencyKey` | Duplicate orders on retry |
+| 5. Idempotency key          | Unique `orders.by_idempotencyKey`             | Duplicate orders on retry             |
 
 ### 5.1 Why the transaction alone is not enough
 
-Convex's serializable OCC guarantees no two *committed* transactions interleave incorrectly, but it
+Convex's serializable OCC guarantees no two _committed_ transactions interleave incorrectly, but it
 does not make a logically-wrong mutation correct. Two specific traps:
 
 **Trap 1 — splitting a check from its write.** If checkout read `available` in one function and
@@ -229,27 +230,27 @@ pending_payment ──► confirmed ──► preparing ──► out_for_delive
 
 ### 6.1 Classification
 
-| Variable | Where | Classification | Notes |
-|---|---|---|---|
-| `CONVEX_DEPLOYMENT` | repo `.env.local` | Public | Deployment name only |
-| `EXPO_PUBLIC_CONVEX_URL` | Expo `.env` | Public | Prefixed ⇒ in client bundle |
-| `NEXT_PUBLIC_CONVEX_URL` | Next `.env` | Public | Prefixed ⇒ in client bundle |
-| `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | Expo `.env` | Public | Publishable by design |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Next `.env` | Public | |
-| `CLERK_JWT_ISSUER_DOMAIN` | **Convex dashboard** | Config | Not a secret, but not committed |
-| `CLERK_SECRET_KEY` | **Convex dashboard** + Next server | **Secret** | Admin user management only |
-| `CLERK_WEBHOOK_SIGNING_SECRET` | **Convex dashboard** | **Secret** | Verifies Clerk webhooks |
-| `CLOUDINARY_CLOUD_NAME` | Convex dashboard | Semi-public | Identifier |
-| `CLOUDINARY_API_KEY` | **Convex dashboard** | Semi-public | Safe to expose; secret is not |
-| `CLOUDINARY_API_SECRET` | **Convex dashboard** | **Secret** | Never leaves Convex |
-| `CLOUDINARY_UPLOAD_FOLDER` | Convex dashboard | Config | `grocery/` prefix |
-| `STRIPE_SECRET_KEY` | **Convex dashboard** | **Secret** | Phase F, deferred |
-| `STRIPE_WEBHOOK_SECRET` | **Convex dashboard** | **Secret** | Phase F, deferred |
-| `ADMIN_USER_IDS` | **Convex dashboard** | Config | Comma-separated Clerk IDs allowed to self-promote |
-| `SUPPORTED_CURRENCIES` | **Convex dashboard** | Config | Currency allowlist for `DATA_MODEL.md` §1.4. Default unresolved — D1 |
-| `DEFAULT_CURRENCY` | **Convex dashboard** | Config | Display currency. Default unresolved — D1 |
-| `TAX_INCLUSIVE` | **Convex dashboard** | Config | Whether VAT is included in displayed price. Unresolved — D2 |
-| `RESERVATION_TTL_MS` | **Convex dashboard** | Config | Reservation expiry window. Unresolved — D3 |
+| Variable                            | Where                              | Classification | Notes                                                                |
+| ----------------------------------- | ---------------------------------- | -------------- | -------------------------------------------------------------------- |
+| `CONVEX_DEPLOYMENT`                 | repo `.env.local`                  | Public         | Deployment name only                                                 |
+| `EXPO_PUBLIC_CONVEX_URL`            | Expo `.env`                        | Public         | Prefixed ⇒ in client bundle                                          |
+| `NEXT_PUBLIC_CONVEX_URL`            | Next `.env`                        | Public         | Prefixed ⇒ in client bundle                                          |
+| `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | Expo `.env`                        | Public         | Publishable by design                                                |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Next `.env`                        | Public         |                                                                      |
+| `CLERK_JWT_ISSUER_DOMAIN`           | **Convex dashboard**               | Config         | Not a secret, but not committed                                      |
+| `CLERK_SECRET_KEY`                  | **Convex dashboard** + Next server | **Secret**     | Admin user management only                                           |
+| `CLERK_WEBHOOK_SIGNING_SECRET`      | **Convex dashboard**               | **Secret**     | Verifies Clerk webhooks                                              |
+| `CLOUDINARY_CLOUD_NAME`             | Convex dashboard                   | Semi-public    | Identifier                                                           |
+| `CLOUDINARY_API_KEY`                | **Convex dashboard**               | Semi-public    | Safe to expose; secret is not                                        |
+| `CLOUDINARY_API_SECRET`             | **Convex dashboard**               | **Secret**     | Never leaves Convex                                                  |
+| `CLOUDINARY_UPLOAD_FOLDER`          | Convex dashboard                   | Config         | `grocery/` prefix                                                    |
+| `STRIPE_SECRET_KEY`                 | **Convex dashboard**               | **Secret**     | Phase F, deferred                                                    |
+| `STRIPE_WEBHOOK_SECRET`             | **Convex dashboard**               | **Secret**     | Phase F, deferred                                                    |
+| `ADMIN_USER_IDS`                    | **Convex dashboard**               | Config         | Comma-separated Clerk IDs allowed to self-promote                    |
+| `SUPPORTED_CURRENCIES`              | **Convex dashboard**               | Config         | Currency allowlist for `DATA_MODEL.md` §1.4. Default unresolved — D1 |
+| `DEFAULT_CURRENCY`                  | **Convex dashboard**               | Config         | Display currency. Default unresolved — D1                            |
+| `TAX_INCLUSIVE`                     | **Convex dashboard**               | Config         | Whether VAT is included in displayed price. Unresolved — D2          |
+| `RESERVATION_TTL_MS`                | **Convex dashboard**               | Config         | Reservation expiry window. Unresolved — D3                           |
 
 > **Currency and tax are deliberately config, not constants.** Both are unresolved business
 > decisions (D1, D2). Encoding either as a literal would force a two-phase schema migration the
@@ -296,23 +297,23 @@ productImages row inserted
 
 **Controls**
 
-| Control | Why |
-|---|---|
-| Signature expires after 1 hour (Cloudinary-enforced, timestamp-based) | Limits replay |
-| `folder` is **server-chosen** and signed | Client cannot write outside the intended folder |
-| `allowed_formats` is signed | Blocks upload of HTML/SVG-with-script and other non-image payloads |
-| **Every client-sent param must be in the signed set** | Cloudinary rejects any unsigned or altered param with `Invalid Signature`. This is the load-bearing control. |
-| Server-side size limit via Cloudinary account Usage Limits | Cloudinary rejects oversized uploads; the *server* enforces the ceiling, not the client |
-| Client-side `maxFileSize` check in the admin UI | Fast feedback only — never treated as a security control |
-| Only the `public_id` is persisted | Client cannot inject an arbitrary URL as an image source |
-| `confirmUpload` re-reads the asset server-side | Prevents a client from claiming an arbitrary `public_id`/dimensions |
-| All image reads are public CDN GETs | No PII, no auth needed, fully cacheable |
-| Deletion is `requireAdmin` + audited | Prevents abuse of the delete endpoint |
+| Control                                                               | Why                                                                                                          |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Signature expires after 1 hour (Cloudinary-enforced, timestamp-based) | Limits replay                                                                                                |
+| `folder` is **server-chosen** and signed                              | Client cannot write outside the intended folder                                                              |
+| `allowed_formats` is signed                                           | Blocks upload of HTML/SVG-with-script and other non-image payloads                                           |
+| **Every client-sent param must be in the signed set**                 | Cloudinary rejects any unsigned or altered param with `Invalid Signature`. This is the load-bearing control. |
+| Server-side size limit via Cloudinary account Usage Limits            | Cloudinary rejects oversized uploads; the _server_ enforces the ceiling, not the client                      |
+| Client-side `maxFileSize` check in the admin UI                       | Fast feedback only — never treated as a security control                                                     |
+| Only the `public_id` is persisted                                     | Client cannot inject an arbitrary URL as an image source                                                     |
+| `confirmUpload` re-reads the asset server-side                        | Prevents a client from claiming an arbitrary `public_id`/dimensions                                          |
+| All image reads are public CDN GETs                                   | No PII, no auth needed, fully cacheable                                                                      |
+| Deletion is `requireAdmin` + audited                                  | Prevents abuse of the delete endpoint                                                                        |
 
 **Two corrections made during Phase A review** (both were wrong in the first draft):
 
 1. `constraining_format` is **not** a signed-upload parameter. The correct control is
-   `allowed_formats`, which *is* part of the signed parameter set.
+   `allowed_formats`, which _is_ part of the signed parameter set.
 2. There is **no** signed parameter that caps upload size. Cloudinary enforces file size through
    the account's Usage Limits setting. Client-side size checks are UX, not security.
 
@@ -333,7 +334,6 @@ exposed unsigned preset "can be used with a different account to have resources 
 original account without approval". Anyone holding the app bundle could upload arbitrary files.
 The signed flow is used instead.
 
-
 ---
 
 ## 8. Payment Security
@@ -341,15 +341,15 @@ The signed flow is used instead.
 Payments are **deferred to Phase F**, but the boundary is designed now so it cannot be bolted on
 incorrectly.
 
-| Rule | Detail |
-|---|---|
-| Amount comes from the order | The amount sent to the provider is `orders.totalMinor`, computed server-side. |
-| Client never confirms payment | `POST /webhooks/payments` with a verified provider signature is the **only** path to `paymentStatus: "paid"`. |
-| Signature verification | Provider's signing scheme, HMAC over the **raw** request body, constant-time comparison, checked before parsing. |
-| Raw body required | Verifying a re-serialized body is a classic bypass. The handler reads `request.text()` first. |
-| Idempotent handler | `by_providerRef` uniqueness means a redelivered webhook is a no-op. |
-| Replay window | Timestamps older than the provider's tolerance are rejected. |
-| No card data touches our servers | Card entry happens in the provider's hosted field/SDK. We never see a PAN. |
+| Rule                             | Detail                                                                                                           |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Amount comes from the order      | The amount sent to the provider is `orders.totalMinor`, computed server-side.                                    |
+| Client never confirms payment    | `POST /webhooks/payments` with a verified provider signature is the **only** path to `paymentStatus: "paid"`.    |
+| Signature verification           | Provider's signing scheme, HMAC over the **raw** request body, constant-time comparison, checked before parsing. |
+| Raw body required                | Verifying a re-serialized body is a classic bypass. The handler reads `request.text()` first.                    |
+| Idempotent handler               | `by_providerRef` uniqueness means a redelivered webhook is a no-op.                                              |
+| Replay window                    | Timestamps older than the provider's tolerance are rejected.                                                     |
+| No card data touches our servers | Card entry happens in the provider's hosted field/SDK. We never see a PAN.                                       |
 
 Cash-on-delivery orders are created with `paymentStatus: "unpaid"` and are only marked paid by an
 admin action on delivery.
@@ -358,12 +358,12 @@ admin action on delivery.
 
 ## 9. Input Validation
 
-| Boundary | Mechanism |
-|---|---|
-| Client → Convex | Convex `v.*` validators on every argument (required and enforced) |
-| Complex payloads | Zod schemas from `packages/shared`, applied inside the handler |
-| Webhook bodies | Signature verified, then parsed with Zod; unknown fields rejected |
-| Admin forms | React Hook Form + Zod resolver for immediate feedback — **and** the server re-validates |
+| Boundary           | Mechanism                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------- |
+| Client → Convex    | Convex `v.*` validators on every argument (required and enforced)                           |
+| Complex payloads   | Zod schemas from `packages/shared`, applied inside the handler                              |
+| Webhook bodies     | Signature verified, then parsed with Zod; unknown fields rejected                           |
+| Admin forms        | React Hook Form + Zod resolver for immediate feedback — **and** the server re-validates     |
 | Environment config | A Zod schema validates `process.env` at Convex startup; the app fails fast on a missing key |
 
 Client-side validation is a UX affordance only. Every rule is re-applied server-side.
@@ -374,13 +374,13 @@ Client-side validation is a UX affordance only. Every rule is re-applied server-
 
 Using the official `@convex-dev/rate-limiter` component (**v0.4.1**, peer `convex: ^1.43.0`), applied to:
 
-| Operation | Limit |
-|---|---|
-| `cart.addItem` | 30 / minute / user |
-| `orders.placeOrder` | 5 / minute / user |
-| `catalog.search` | 60 / minute / IP-ish key |
-| `media.createUploadSignature` | 20 / hour / user |
-| Clerk webhook | 120 / minute (provider key) |
+| Operation                     | Limit                       |
+| ----------------------------- | --------------------------- |
+| `cart.addItem`                | 30 / minute / user          |
+| `orders.placeOrder`           | 5 / minute / user           |
+| `catalog.search`              | 60 / minute / IP-ish key    |
+| `media.createUploadSignature` | 20 / hour / user            |
+| Clerk webhook                 | 120 / minute (provider key) |
 
 Rate limits return `retryAfter`, which the client surfaces to the user rather than silently failing.
 
@@ -388,26 +388,26 @@ Rate limits return `retryAfter`, which the client surfaces to the user rather th
 
 ## 11. Observability & Error Handling
 
-| Concern | Approach |
-|---|---|
-| Sensitive data in logs | No tokens, secrets, full card data, or full addresses are ever logged. Addresses log `userId` + city only. |
-| Client-facing errors | `ConvexError` with a stable machine code and a human message. Stack traces never reach the client. |
-| Unknown errors | Logged server-side with a correlation id; the client sees a generic message + the id. |
-| Failed payments / webhooks | Recorded in `payments.failureReason`; surfaced in the admin dashboard. |
-| Audit trail | Every privileged mutation writes `auditLogs` in the same transaction. |
-| Crash reporting | Expo: `expo-updates` channel separation + optional Sentry. Web: Next.js error boundaries + optional Sentry. |
+| Concern                    | Approach                                                                                                    |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Sensitive data in logs     | No tokens, secrets, full card data, or full addresses are ever logged. Addresses log `userId` + city only.  |
+| Client-facing errors       | `ConvexError` with a stable machine code and a human message. Stack traces never reach the client.          |
+| Unknown errors             | Logged server-side with a correlation id; the client sees a generic message + the id.                       |
+| Failed payments / webhooks | Recorded in `payments.failureReason`; surfaced in the admin dashboard.                                      |
+| Audit trail                | Every privileged mutation writes `auditLogs` in the same transaction.                                       |
+| Crash reporting            | Expo: `expo-updates` channel separation + optional Sentry. Web: Next.js error boundaries + optional Sentry. |
 
 ---
 
 ## 12. Dependency & Supply Chain
 
-| Control | Tooling |
-|---|---|
-| Version pinning | Exact versions in `package.json`; a committed `package-lock.json` |
+| Control             | Tooling                                                             |
+| ------------------- | ------------------------------------------------------------------- |
+| Version pinning     | Exact versions in `package.json`; a committed `package-lock.json`   |
 | Vulnerability audit | `npm audit --audit-level=high` in CI, non-zero exit fails the build |
-| Automated updates | Dependabot or Renovate, PR-only, never auto-merge to `main` |
-| Licence audit | `license-checker` in CI; flags GPL/AGPL conflicts |
-| Secret scan | `gitleaks` on every push |
+| Automated updates   | Dependabot or Renovate, PR-only, never auto-merge to `main`         |
+| Licence audit       | `license-checker` in CI; flags GPL/AGPL conflicts                   |
+| Secret scan         | `gitleaks` on every push                                            |
 
 ---
 
@@ -438,7 +438,7 @@ Rate limits return `retryAfter`, which the client surfaces to the user rather th
 - [ ] Audit log rows exist for every admin mutation.
 - [ ] Rate limiting and auth guards reviewed by a second engineer.
 
-> **Note on the concurrency tests.** These are written *before* the implementation they cover.
+> **Note on the concurrency tests.** These are written _before_ the implementation they cover.
 > `Promise.allSettled` (not `Promise.all`) is required — the latter rejects on the first failure and
 > would hide exactly the races these tests exist to detect. Full test definitions are in
 > [`IMPLEMENTATION_PLAN.md` §7](./IMPLEMENTATION_PLAN.md).

@@ -8,11 +8,7 @@ export interface DividerProps {
   readonly style?: StyleProp<ViewStyle>;
 }
 
-export function Divider({
-  vertical = false,
-  space = 4,
-  style,
-}: DividerProps) {
+export function Divider({ vertical = false, space = 4, style }: DividerProps) {
   const { colors } = useTheme();
 
   return (
