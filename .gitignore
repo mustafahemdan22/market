@@ -1,0 +1,53 @@
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Expo / React Native
+.expo/
+.expo-shared/
+web-build/
+*.orig.*
+
+# Environment — NEVER commit real secrets
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.production.local
+!.env.example
+
+# Convex
+convex/.env
+convex/.env.local
+.convex/
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# Vercel (admin host)
+.vercel/
+
+# Agent/editor scratch
+.opencode/

@@ -1,0 +1,20 @@
+{
+  "name": "@grocery/convex",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Convex authoritative backend functions, schema, and auth guards",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "convex": "^1.46.0",
+    "@grocery/shared": "*"
+  },
+  "devDependencies": {
+    "convex-test": "^0.0.60",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.3"
+  }
+}

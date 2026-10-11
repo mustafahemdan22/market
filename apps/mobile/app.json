@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "Grocery Market",
+    "slug": "grocery-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "grocery",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#0E7C5A",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.market.grocery"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0E7C5A"
+      },
+      "package": "com.market.grocery"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
