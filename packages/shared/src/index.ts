@@ -1,2 +1,2 @@
-export * from "./currency/index.js";
-export * from "./format/index.js";
+export * from "./currency/index";
+export * from "./format/index";

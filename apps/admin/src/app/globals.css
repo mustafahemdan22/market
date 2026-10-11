@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+/*
+ * Direction strategy
+ * ------------------
+ * The admin dashboard is a real HTML document, so it uses the platform's own
+ * bidirectional layout rather than the mobile app's JS-mirrored approach.
+ * Setting `dir` on <html> lets logical properties (ms-*, me-*, text-start,
+ * text-end) do the mirroring, so no `row-reverse` gymnastics are needed.
+ */
+:root {
+  --surface-canvas: #f6f7f9;
+  --surface-card: #ffffff;
+  --border-subtle: #e4e7ec;
+  --brand-600: #0f7b4f;
+  --brand-700: #0b5f3d;
+  --text-primary: #101828;
+  --text-muted: #667085;
+  --danger-600: #b42318;
+  --warning-600: #b54708;
+}
+
+body {
+  background: var(--surface-canvas);
+  color: var(--text-primary);
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+}
+
+.card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.75rem;
+}
+
+/* Keep numerals and prices legible and stable in both directions. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Arabic content renders right-to-left regardless of document direction. */
+[lang="ar"] {
+  font-family: "Noto Sans Arabic", "Segoe UI", system-ui, sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand-600);
+  outline-offset: 2px;
+}

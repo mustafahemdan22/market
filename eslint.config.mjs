@@ -8,17 +8,24 @@ import tseslint from "typescript-eslint";
  *
  * Phase B scope: packages/shared + apps/mobile.
  * Apps/admin and packages/convex configs are added when those packages land.
+ *
+ * NOTE: `_generated/` is deliberately NOT ignored. Excluding it also removes it
+ * from the type-aware program, so every consumer of `_generated/server`
+ * degrades to "error typed" and type-aware rules report false positives. The
+ * stub files carry their own `/* eslint-disable *\/` header instead.
  */
 export default tseslint.config(
   {
     ignores: [
       "**/node_modules/**",
       "**/dist/**",
+      "**/.next/**",
+      "**/next-env.d.ts",
       "**/.expo/**",
       "**/coverage/**",
-      "**/_generated/**",
       "docs/**",
       "*.mjs",
+      "**/*.mjs",
       "**/*.config.ts",
     ],
   },

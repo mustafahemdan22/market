@@ -1,0 +1,27 @@
+{
+  "name": "@grocery/admin",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Admin dashboard for product, category, stock and image management",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "7.9.13",
+    "@grocery/shared": "*",
+    "convex": "^1.46.0",
+    "next": "16.4.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "~6.0.3"
+  }
+}

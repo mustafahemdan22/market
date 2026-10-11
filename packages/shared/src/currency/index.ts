@@ -78,9 +78,7 @@ export function getCurrency(code: SupportedCurrencyCode): CurrencyDefinition {
   return currency;
 }
 
-export function isSupportedCurrencyCode(
-  value: unknown,
-): value is SupportedCurrencyCode {
+export function isSupportedCurrencyCode(value: unknown): value is SupportedCurrencyCode {
   return isSupportedCurrency(value);
 }
 
@@ -108,9 +106,7 @@ export interface ResolveCurrencyOptions {
  * Never throws — an unresolvable currency falls back rather than crashing a
  * storefront, but the fallback is always logged by the caller.
  */
-export function resolveCurrency(
-  options: ResolveCurrencyOptions = {},
-): SupportedCurrencyCode {
+export function resolveCurrency(options: ResolveCurrencyOptions = {}): SupportedCurrencyCode {
   if (options.configured !== undefined && isSupportedCurrency(options.configured)) {
     return options.configured;
   }

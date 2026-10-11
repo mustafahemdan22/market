@@ -5,7 +5,7 @@ import {
   getCurrency,
   isSupportedCurrency,
   resolveCurrency,
-} from "../currency/index.js";
+} from "../currency/index";
 import {
   DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
@@ -16,7 +16,7 @@ import {
   localeDirection,
   pluralCategory,
   resolveLocale,
-} from "./locale.js";
+} from "./locale";
 
 describe("currency allowlist", () => {
   it("contains both launch candidates", () => {
@@ -155,9 +155,9 @@ describe("formatMoney", () => {
   });
 
   it("throws for an unsupported currency rather than mis-formatting", () => {
-    expect(() =>
-      formatMoney(100, { locale: "en", currency: "JPY" as "EGP" }),
-    ).toThrow(/unsupported currency/i);
+    expect(() => formatMoney(100, { locale: "en", currency: "JPY" as "EGP" })).toThrow(
+      /unsupported currency/i,
+    );
   });
 
   it("rejects fractional minor units", () => {

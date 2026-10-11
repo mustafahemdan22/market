@@ -1,8 +1,4 @@
-import {
-  getCurrency,
-  type CurrencyCode,
-  type SupportedCurrencyCode,
-} from "../currency/index.js";
+import { getCurrency, type CurrencyCode, type SupportedCurrencyCode } from "../currency/index";
 
 /**
  * Money is stored and manipulated exclusively as an integer in MINOR UNITS.
@@ -39,10 +35,7 @@ export function assertIntegerMinor(value: number, field = "amount"): void {
  * currency with exponent 0 or 3 would otherwise be formatted 100x wrong.
  * Unsupported currencies are rejected instead of guessed.
  */
-export function toMajorUnits(
-  minor: MinorUnits,
-  currency: SupportedCurrencyCode,
-): number {
+export function toMajorUnits(minor: MinorUnits, currency: SupportedCurrencyCode): number {
   assertIntegerMinor(minor, "minor");
   const { exponent } = getCurrency(currency);
   if (exponent !== 2) {
@@ -140,8 +133,7 @@ export function computeOrderTotals(input: {
     return null;
   }
 
-  const totalMinor =
-    subtotalMinor - discountMinor + deliveryFeeMinor + taxMinor;
+  const totalMinor = subtotalMinor - discountMinor + deliveryFeeMinor + taxMinor;
 
   // A discount larger than the subtotal is rejected, not clamped.
   if (totalMinor < 0) {

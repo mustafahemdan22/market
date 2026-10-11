@@ -1,5 +1,5 @@
-import { isSupportedCurrency, type SupportedCurrencyCode } from "../currency/index.js";
-import { toMajorUnits, type MinorUnits } from "./money.js";
+import { isSupportedCurrency, type SupportedCurrencyCode } from "../currency/index";
+import { toMajorUnits, type MinorUnits } from "./money";
 
 /**
  * BCP-47 locale tags supported at launch.
@@ -16,10 +16,7 @@ export const DEFAULT_LOCALE: SupportedLocale = "ar-EG";
 export type SupportedLanguage = "en" | "ar";
 
 export function isSupportedLocale(value: unknown): value is SupportedLocale {
-  return (
-    typeof value === "string" &&
-    (SUPPORTED_LOCALES as readonly string[]).includes(value)
-  );
+  return typeof value === "string" && (SUPPORTED_LOCALES as readonly string[]).includes(value);
 }
 
 /**
@@ -73,10 +70,7 @@ export interface FormatMoneyOptions {
  * bidi isolation — is delegated to `Intl`. Nothing here is hand-rolled, because
  * Arabic currency rendering has rules that are easy to get subtly wrong.
  */
-export function formatMoney(
-  minor: MinorUnits,
-  options: FormatMoneyOptions,
-): string {
+export function formatMoney(minor: MinorUnits, options: FormatMoneyOptions): string {
   const { locale, currency, symbol = true } = options;
 
   if (!isSupportedCurrency(currency)) {
@@ -107,10 +101,7 @@ export function formatNumber(value: number, locale: SupportedLocale): string {
  * TWO. A naive `count === 1 ? singular : plural` produces incorrect Arabic.
  * This delegates to `Intl.PluralRules` so the CLDR data drives correctness.
  */
-export function pluralCategory(
-  count: number,
-  locale: SupportedLocale,
-): Intl.LDMLPluralRule {
+export function pluralCategory(count: number, locale: SupportedLocale): Intl.LDMLPluralRule {
   return new Intl.PluralRules(locale).select(count);
 }
 

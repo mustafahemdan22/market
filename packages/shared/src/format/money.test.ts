@@ -9,7 +9,7 @@ import {
   percentOfMinor,
   subtractMinor,
   toMajorUnits,
-} from "./money.js";
+} from "./money";
 
 describe("assertIntegerMinor", () => {
   it("accepts integers", () => {

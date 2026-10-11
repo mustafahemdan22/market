@@ -11,27 +11,27 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@clerk/expo": "~4.10.1",
+    "@expo/vector-icons": "^15.1.1",
     "@grocery/shared": "*",
+    "convex": "^1.46.0",
     "expo": "~57.0.27",
-    "expo-router": "~57.0.25",
-    "expo-linking": "~57.0.12",
     "expo-constants": "~57.0.21",
-    "expo-status-bar": "~57.0.1",
+    "expo-image": "~57.0.5",
+    "expo-linking": "~57.0.12",
+    "expo-localization": "~57.0.2",
+    "expo-router": "~57.0.25",
+    "expo-secure-store": "~57.0.4",
     "expo-splash-screen": "~57.0.9",
+    "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
     "react-native": "0.86.3",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
-    "expo-image": "~57.0.5",
-    "@expo/vector-icons": "^15.1.1",
-    "expo-localization": "~57.0.2",
-    "expo-secure-store": "~57.0.4",
-    "@clerk/expo": "~4.10.1",
-    "convex": "^1.46.0",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
-    "@types/react": "^19.3.0",
+    "@types/react": "~19.2.4",
     "typescript": "~6.0.3"
   }
 }
