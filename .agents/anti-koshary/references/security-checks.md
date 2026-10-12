@@ -35,14 +35,14 @@ git ls-files | grep -E '(^|/)\.env($|\.)' | grep -vE '\.(example|sample|template
 **Before reporting any hit, rule out these — they are most of what you'll
 find, and reporting them costs you the user's trust in the whole report:**
 
-| Looks like a secret | Usually isn't |
-| --- | --- |
-| `.env.example`, `.env.sample`, `config.template` | Placeholders by design — but check the values really are placeholders |
-| Test fixtures, `__mocks__`, seed data | `password = "hunter2"` in a test is fine |
-| Documentation and READMEs | Provider docs get copy-pasted with example keys |
-| `PUBLIC_`, `NEXT_PUBLIC_`, `VITE_`, `REACT_APP_` prefixes | Compiled into the bundle on purpose. Publishable keys (`pk_live_`, Firebase web config) belong here. Do flag a *secret* key wearing a public prefix — that is a real finding |
-| Long base64 or hex blobs | Often hashes, checksums, or inlined assets |
-| `os.environ[...]`, `process.env.X` | Reading a secret is correct; the finding would be a literal fallback beside it |
+| Looks like a secret                                       | Usually isn't                                                                                                                                                                |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.env.example`, `.env.sample`, `config.template`          | Placeholders by design — but check the values really are placeholders                                                                                                        |
+| Test fixtures, `__mocks__`, seed data                     | `password = "hunter2"` in a test is fine                                                                                                                                     |
+| Documentation and READMEs                                 | Provider docs get copy-pasted with example keys                                                                                                                              |
+| `PUBLIC_`, `NEXT_PUBLIC_`, `VITE_`, `REACT_APP_` prefixes | Compiled into the bundle on purpose. Publishable keys (`pk_live_`, Firebase web config) belong here. Do flag a _secret_ key wearing a public prefix — that is a real finding |
+| Long base64 or hex blobs                                  | Often hashes, checksums, or inlined assets                                                                                                                                   |
+| `os.environ[...]`, `process.env.X`                        | Reading a secret is correct; the finding would be a literal fallback beside it                                                                                               |
 
 The finding that always survives: a real credential whose blast radius you
 can name. Report the file and line, say what it grants access to, and tell
@@ -106,7 +106,7 @@ Look specifically for:
 - A route added later that sits outside the middleware or decorator that
   protects its neighbours — the most common real hole.
 - **Authorization vs authentication**: the request is authenticated, but
-  nothing verifies this user owns *this* record. `findById(req.params.id)`
+  nothing verifies this user owns _this_ record. `findById(req.params.id)`
   with no ownership clause is the canonical form.
 - Client-side-only gating — a hidden button with an unprotected endpoint
   behind it.
@@ -119,7 +119,7 @@ Look specifically for:
 
 ```bash
 git grep -nIE '(console\.(log|error|warn)|print|println|logger?\.(info|debug|error|warn))' | grep -iE 'password|token|secret|key|ssn|card|auth|credential'
-git grep -nIE '(localStorage|sessionStorage)\.setItem' 
+git grep -nIE '(localStorage|sessionStorage)\.setItem'
 ```
 
 Flag: credentials, tokens, or personal data written to logs; auth tokens in

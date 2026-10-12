@@ -9,11 +9,14 @@
  */
 
 import type * as admin_categories from "../admin/categories.js";
+import type * as admin_orders from "../admin/orders.js";
 import type * as admin_productImages from "../admin/productImages.js";
 import type * as admin_products from "../admin/products.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_catalog from "../lib/catalog.js";
 import type * as lib_customer from "../lib/customer.js";
+import type * as lib_inventory from "../lib/inventory.js";
+import type * as lib_orderStatus from "../lib/orderStatus.js";
 import type * as lib_uploadParams from "../lib/uploadParams.js";
 import type * as lib_validate from "../lib/validate.js";
 import type * as media from "../media.js";
@@ -29,11 +32,14 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "admin/categories": typeof admin_categories;
+  "admin/orders": typeof admin_orders;
   "admin/productImages": typeof admin_productImages;
   "admin/products": typeof admin_products;
   "lib/auth": typeof lib_auth;
   "lib/catalog": typeof lib_catalog;
   "lib/customer": typeof lib_customer;
+  "lib/inventory": typeof lib_inventory;
+  "lib/orderStatus": typeof lib_orderStatus;
   "lib/uploadParams": typeof lib_uploadParams;
   "lib/validate": typeof lib_validate;
   media: typeof media;

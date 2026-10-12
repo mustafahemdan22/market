@@ -6,7 +6,7 @@ easiest ways to produce a useless report: token-similarity finds
 coincidences, and line-count finds functions that are long for good
 reasons.
 
-The question underneath all of it is not *is this ugly* but **what does the
+The question underneath all of it is not _is this ugly_ but **what does the
 next person changing this have to hold in their head, and how many places
 do they have to change at once?**
 
@@ -31,9 +31,9 @@ Concrete tells:
 - A "utils" or "helpers" module that everything imports and that imports
   everything back.
 
-Report these by consequence, not by principle: *"the price rule lives in
+Report these by consequence, not by principle: _"the price rule lives in
 the checkout component, so the mobile client and the admin panel each
-reimplement it"* lands; *"this violates separation of concerns"* does not.
+reimplement it"_ lands; _"this violates separation of concerns"_ does not.
 
 ## Duplication that costs money
 
@@ -44,7 +44,7 @@ Worth reporting:
 
 - The same validation rule (an email regex, a password policy, a max
   length) enforced independently in the form, the API handler, and the
-  model. Three places, one rule, no shared source — the rule *will* drift,
+  model. Three places, one rule, no shared source — the rule _will_ drift,
   and the bug appears as "it saved through the API but the UI rejects it."
 - The same business calculation — tax, discount, pagination offset,
   permission check — implemented more than once. Two answers to one
@@ -73,9 +73,9 @@ coincidental duplication is how you create the next koshary: now two
 unrelated callers share a function that has to grow a flag every time
 either one changes.
 
-Quantify what you report: *"this regex appears in 4 files; changing the
-rule means editing all 4"* is actionable in a way *"there is duplication in
-the validators"* is not.
+Quantify what you report: _"this regex appears in 4 files; changing the
+rule means editing all 4"_ is actionable in a way _"there is duplication in
+the validators"_ is not.
 
 ## Files and functions that stopped being read
 
@@ -87,7 +87,7 @@ is not.
 What to actually look for:
 
 - **More than one reason to change.** The reliable test. If a function
-  changes when the pricing rules change *and* when the email template
+  changes when the pricing rules change _and_ when the email template
   changes, it is two functions.
 - **Nesting past three levels**, especially with conditions in the middle
   of a long body — that is where the missed branch lives.
@@ -127,8 +127,8 @@ unused. Check for dynamic access before deleting anything:
 - anything exported from a package's public surface — for a library, an
   unused export is the API
 
-Unused *imports* and *local variables* are safe and worth listing. Unused
-*exports* need a whole-repo check, and unused *public API* is not dead code
+Unused _imports_ and _local variables_ are safe and worth listing. Unused
+_exports_ need a whole-repo check, and unused _public API_ is not dead code
 at all.
 
 ## Extracting a reusable piece — only when it pays

@@ -2,9 +2,11 @@ import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 import { mutation, query, type MutationCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
-import { ensureCustomer, requireCustomerId } from "../lib/customer";
+import { ensureCustomer, getCustomerId, requireCustomerId } from "../lib/customer";
 import { nowArg } from "../lib/catalog";
 import { invalid, MAX_STOCK_UNITS, requireStock } from "../lib/validate";
+
+const EMPTY_CART = { items: [], subtotalMinor: 0, itemCount: 0 } as const;
 
 /**
  * Customer cart.
@@ -38,13 +40,18 @@ async function getOrCreateCartId(
 export const getCart = query({
   args: {},
   handler: async (ctx) => {
-    const customerId = await requireCustomerId(ctx);
+    // `getCustomerId`, not `requireCustomerId`: a brand-new signed-in customer
+    // has no row yet, and "your cart is empty" is the truthful answer. Throwing
+    // a provisioning error would show a new shopper an error screen for a cart
+    // that genuinely does not exist. Writes create the row.
+    const customerId = await getCustomerId(ctx);
+    if (customerId === null) return EMPTY_CART;
 
     const cart = await ctx.db
       .query("carts")
       .withIndex("by_customer", (q) => q.eq("customerId", customerId))
       .unique();
-    if (cart === null) return { items: [], subtotalMinor: 0, itemCount: 0 };
+    if (cart === null) return EMPTY_CART;
 
     const items = await ctx.db
       .query("cartItems")

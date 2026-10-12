@@ -36,14 +36,14 @@ oauth2_flows:
   web_app_with_backend: authorization_code + PKCE
   single_page_app: authorization_code + PKCE (no client secret)
   mobile_app: authorization_code + PKCE
-  NEVER_USE: implicit_grant  # Deprecated, tokens exposed in URL
+  NEVER_USE: implicit_grant # Deprecated, tokens exposed in URL
 
 # Token best practices
 tokens:
-  access_token_lifetime: 15_minutes  # Short-lived
-  refresh_token_lifetime: 7_days     # Rotate on use
-  refresh_token_rotation: true       # New refresh token each time
-  store_tokens: httponly_secure_cookie  # Not localStorage
+  access_token_lifetime: 15_minutes # Short-lived
+  refresh_token_lifetime: 7_days # Rotate on use
+  refresh_token_rotation: true # New refresh token each time
+  store_tokens: httponly_secure_cookie # Not localStorage
   revocation: implement_revocation_endpoint
 ```
 
@@ -136,8 +136,8 @@ rate_limits:
   headers:
     X-RateLimit-Limit: "60"
     X-RateLimit-Remaining: "45"
-    X-RateLimit-Reset: "1620000060"  # Unix timestamp
-    Retry-After: "30"               # On 429 response
+    X-RateLimit-Reset: "1620000060" # Unix timestamp
+    Retry-After: "30" # On 429 response
 ```
 
 ---
@@ -170,22 +170,22 @@ class CreateUserRequest(BaseModel):
 ```yaml
 validation_rules:
   string_fields:
-    max_length: 10_000         # No unbounded strings
+    max_length: 10_000 # No unbounded strings
     strip_whitespace: true
-    reject_null_bytes: true     # \x00 can cause issues
+    reject_null_bytes: true # \x00 can cause issues
 
   numeric_fields:
-    define_min_max: true        # Always set bounds
-    reject_nan_infinity: true   # Can break math operations
+    define_min_max: true # Always set bounds
+    reject_nan_infinity: true # Can break math operations
 
   array_fields:
-    max_items: 100              # No unbounded arrays
+    max_items: 100 # No unbounded arrays
     validate_each_item: true
 
   file_uploads:
     max_size: 10MB
     allowed_types: ["image/jpeg", "image/png", "application/pdf"]
-    validate_magic_bytes: true  # Don't trust Content-Type header alone
+    validate_magic_bytes: true # Don't trust Content-Type header alone
     scan_for_malware: true
 
   query_parameters:
@@ -295,7 +295,7 @@ security_headers:
   X-Frame-Options: "DENY"
 
   # XSS protection (legacy browsers)
-  X-XSS-Protection: "0"  # Disable, use CSP instead
+  X-XSS-Protection: "0" # Disable, use CSP instead
 
   # HTTPS enforcement
   Strict-Transport-Security: "max-age=31536000; includeSubDomains; preload"
@@ -431,10 +431,10 @@ require_idempotency_key:
   - POST /payments
   - POST /transfers
   - POST /orders
-  - POST /webhooks/*  # Use event ID as key
+  - POST /webhooks/* # Use event ID as key
   - Any non-idempotent mutation
 
-naturally_idempotent:  # No key needed
+naturally_idempotent: # No key needed
   - GET (all)
   - PUT (full replacement)
   - DELETE (by ID)

@@ -7,3 +7,4 @@
  * grants Metro the watch folder and the hoisted module paths this needs.
  */
 export { api } from "../../../../packages/convex/convex/_generated/api";
+export type { Id } from "../../../../packages/convex/convex/_generated/dataModel";

@@ -34,6 +34,15 @@ export interface Product {
   readonly originAr: string;
   readonly images: readonly string[];
   readonly variants?: readonly ProductVariant[];
+  /**
+   * The variant a one-tap "add to cart" should use.
+   *
+   * Present only when the data came from Convex, because a cart line is a
+   * VARIANT reference and there is nothing to reference against in the bundled
+   * fixtures. Its absence is a real, visible state: the UI says the cart is
+   * unavailable rather than pretending a local line was added.
+   */
+  readonly defaultVariantId?: string;
 }
 
 export interface Category {

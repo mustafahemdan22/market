@@ -7,13 +7,14 @@
 
 ## When to Use What
 
-| Method | Best For | Effort | Output |
-|--------|----------|--------|--------|
-| **STRIDE** | Component-level analysis, quick threat identification | Low-Medium | List of threats per component |
-| **PASTA** | Full system risk analysis, business-aligned | Medium-High | Prioritized attack scenarios |
-| **Both** | Critical systems, compliance requirements | High | Complete threat landscape |
+| Method     | Best For                                              | Effort      | Output                        |
+| ---------- | ----------------------------------------------------- | ----------- | ----------------------------- |
+| **STRIDE** | Component-level analysis, quick threat identification | Low-Medium  | List of threats per component |
+| **PASTA**  | Full system risk analysis, business-aligned           | Medium-High | Prioritized attack scenarios  |
+| **Both**   | Critical systems, compliance requirements             | High        | Complete threat landscape     |
 
 **Rule of thumb:**
+
 - Quick code review or PR? -> STRIDE on changed components
 - New system design or architecture review? -> PASTA full process
 - Production system with sensitive data? -> Both (PASTA for strategy, STRIDE for each component)
@@ -29,6 +30,7 @@ STRIDE categorizes threats into six types. For each, ask: "Can an attacker do th
 **Question:** Can someone pretend to be another user, service, or component?
 
 **Examples:**
+
 ```
 # API without authentication
 GET /api/users/123/data  # Anyone can access any user's data
@@ -51,6 +53,7 @@ POST /webhooks/payment  # No signature validation, anyone can send fake events
 **Question:** Can someone modify data in transit, at rest, or in processing?
 
 **Examples:**
+
 ```
 # SQL injection modifying data
 POST /api/transfer {"amount": "100; UPDATE accounts SET balance=999999 WHERE id=1"}
@@ -73,6 +76,7 @@ config.yaml loaded without integrity check -> attacker modifies log_level: DEBUG
 **Question:** Can someone perform an action and deny it later?
 
 **Examples:**
+
 ```
 # No audit logging on financial transactions
 def transfer_money(from_acc, to_acc, amount):
@@ -93,6 +97,7 @@ def transfer_money(from_acc, to_acc, amount):
 **Question:** Can someone access data they shouldn't see?
 
 **Examples:**
+
 ```python
 # Stack trace in production API response
 {
@@ -118,6 +123,7 @@ GET /.env  # Returns API_KEY=sk-live-xxxxx, DB_PASSWORD=...
 **Question:** Can someone make the system unavailable?
 
 **Examples:**
+
 ```python
 # Unbounded query with no pagination
 GET /api/users  # Returns 10 million records, crashes server
@@ -141,6 +147,7 @@ POST /api/reports/generate  # Each request takes 30s and 2GB RAM
 **Question:** Can someone gain permissions they shouldn't have?
 
 **Examples:**
+
 ```python
 # IDOR - Insecure Direct Object Reference
 GET /api/users/123/admin-panel  # Only checks if user is logged in, not if they're admin
@@ -278,6 +285,7 @@ Use this template for every identified threat:
 **Prerequisites:** What the attacker needs (access level, knowledge, tools)
 
 **Impact:**
+
 - Confidentiality: HIGH/MEDIUM/LOW
 - Integrity: HIGH/MEDIUM/LOW
 - Availability: HIGH/MEDIUM/LOW
@@ -287,10 +295,12 @@ Use this template for every identified threat:
 **Severity:** CRITICAL/HIGH/MEDIUM/LOW (Impact x Probability)
 
 **Evidence/Detection:**
+
 - How to detect if this is being exploited
 - Log patterns, monitoring alerts
 
 **Mitigation:**
+
 - [ ] Short-term fix (hotfix)
 - [ ] Long-term fix (architectural)
 - [ ] Monitoring/alerting to add
@@ -308,14 +318,14 @@ Use this template for every identified threat:
 
 ### STRIDE Analysis
 
-| Category | Threat | Severity | Mitigation |
-|----------|--------|----------|------------|
-| **Spoofing** | Attacker sends fake Stripe events | CRITICAL | Verify `Stripe-Signature` header with HMAC |
-| **Tampering** | Event payload modified in transit | HIGH | HTTPS + signature verification |
-| **Repudiation** | Cannot prove event was received/processed | MEDIUM | Log all webhook events with idempotency key |
-| **Info Disclosure** | Error responses leak internal state | MEDIUM | Return generic 200/400, log details internally |
-| **DoS** | Flood endpoint with fake events | HIGH | Rate limit by IP, verify signature before processing |
-| **EoP** | Webhook triggers admin-level operations | HIGH | Webhook handler runs with minimal permissions, validate event type |
+| Category            | Threat                                    | Severity | Mitigation                                                         |
+| ------------------- | ----------------------------------------- | -------- | ------------------------------------------------------------------ |
+| **Spoofing**        | Attacker sends fake Stripe events         | CRITICAL | Verify `Stripe-Signature` header with HMAC                         |
+| **Tampering**       | Event payload modified in transit         | HIGH     | HTTPS + signature verification                                     |
+| **Repudiation**     | Cannot prove event was received/processed | MEDIUM   | Log all webhook events with idempotency key                        |
+| **Info Disclosure** | Error responses leak internal state       | MEDIUM   | Return generic 200/400, log details internally                     |
+| **DoS**             | Flood endpoint with fake events           | HIGH     | Rate limit by IP, verify signature before processing               |
+| **EoP**             | Webhook triggers admin-level operations   | HIGH     | Webhook handler runs with minimal permissions, validate event type |
 
 ### Key Implementation
 
@@ -345,22 +355,22 @@ def verify_stripe_webhook(payload: bytes, signature: str, secret: str) -> bool:
 
 ### STRIDE Analysis
 
-| Category | Threat | Severity | Mitigation |
-|----------|--------|----------|------------|
-| **Spoofing** | Prompt injection makes agent impersonate admin | CRITICAL | Input sanitization, system prompt hardening |
-| **Tampering** | Agent modifies files/DB beyond intended scope | CRITICAL | Read-only by default, allowlist of writable paths |
-| **Repudiation** | Cannot trace which agent action caused damage | HIGH | Log every tool call with full context |
-| **Info Disclosure** | Agent leaks secrets from context/env to output | CRITICAL | Strip secrets before context injection, output filtering |
-| **DoS** | Agent enters infinite loop, burns API credits | HIGH | Iteration limits, token budgets, timeout per operation |
-| **EoP** | Agent escapes sandbox via tool chaining | CRITICAL | Least-privilege tool access, no shell access, sandboxed execution |
+| Category            | Threat                                         | Severity | Mitigation                                                        |
+| ------------------- | ---------------------------------------------- | -------- | ----------------------------------------------------------------- |
+| **Spoofing**        | Prompt injection makes agent impersonate admin | CRITICAL | Input sanitization, system prompt hardening                       |
+| **Tampering**       | Agent modifies files/DB beyond intended scope  | CRITICAL | Read-only by default, allowlist of writable paths                 |
+| **Repudiation**     | Cannot trace which agent action caused damage  | HIGH     | Log every tool call with full context                             |
+| **Info Disclosure** | Agent leaks secrets from context/env to output | CRITICAL | Strip secrets before context injection, output filtering          |
+| **DoS**             | Agent enters infinite loop, burns API credits  | HIGH     | Iteration limits, token budgets, timeout per operation            |
+| **EoP**             | Agent escapes sandbox via tool chaining        | CRITICAL | Least-privilege tool access, no shell access, sandboxed execution |
 
 ### Critical Controls for AI Agents
 
 ```yaml
 agent_security:
   tool_access:
-    file_system: READ_ONLY  # Default
-    writable_paths: ["/tmp/agent-workspace/"]  # Explicit allowlist
+    file_system: READ_ONLY # Default
+    writable_paths: ["/tmp/agent-workspace/"] # Explicit allowlist
     blocked_paths: ["~/.ssh", "~/.aws", ".env"]
     max_file_size: 1MB
 
@@ -375,21 +385,21 @@ agent_security:
     log_all_tool_calls: true
     alert_on_file_write: true
     alert_on_external_api: true
-    alert_on_secret_pattern: true  # Regex for API keys, passwords
+    alert_on_secret_pattern: true # Regex for API keys, passwords
 
   isolation:
-    network: RESTRICTED  # Only allowlisted domains
+    network: RESTRICTED # Only allowlisted domains
     allowed_domains: ["api.openai.com", "api.anthropic.com"]
     no_shell_access: true
-    no_code_execution: true  # Unless explicitly sandboxed
+    no_code_execution: true # Unless explicitly sandboxed
 ```
 
 ---
 
 ## Quick Reference: Severity Matrix
 
-| | Low Impact | Medium Impact | High Impact |
-|---|---|---|---|
-| **High Probability** | MEDIUM | HIGH | CRITICAL |
-| **Medium Probability** | LOW | MEDIUM | HIGH |
-| **Low Probability** | LOW | LOW | MEDIUM |
+|                        | Low Impact | Medium Impact | High Impact |
+| ---------------------- | ---------- | ------------- | ----------- |
+| **High Probability**   | MEDIUM     | HIGH          | CRITICAL    |
+| **Medium Probability** | LOW        | MEDIUM        | HIGH        |
+| **Low Probability**    | LOW        | LOW           | MEDIUM      |

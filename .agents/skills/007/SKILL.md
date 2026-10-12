@@ -1,23 +1,23 @@
 ---
-name: '007'
+name: "007"
 description: Security audit, hardening, threat modeling (STRIDE/PASTA), Red/Blue Team, OWASP checks, code review, incident response, and infrastructure security for any project.
 risk: critical
 source: community
-date_added: '2026-03-06'
+date_added: "2026-03-06"
 author: renat
 tags:
-- security
-- audit
-- owasp
-- threat-modeling
-- hardening
-- pentest
+  - security
+  - audit
+  - owasp
+  - threat-modeling
+  - hardening
+  - pentest
 tools:
-- claude-code
-- antigravity
-- cursor
-- gemini-cli
-- codex-cli
+  - claude-code
+  - antigravity
+  - cursor
+  - gemini-cli
+  - codex-cli
 ---
 
 # 007 — Licenca para Auditar
@@ -42,6 +42,7 @@ Read [the detailed guide](references/detailed-guide.md) before executing this sk
 - The user needs general-purpose assistance without domain expertise
 
 ## Limitations
+
 - Use this skill only when the task clearly matches the scope described above.
 - Do not treat the output as a substitute for environment-specific validation, testing, or expert review.
 - Stop and ask for clarification if required inputs, permissions, safety boundaries, or success criteria are missing.

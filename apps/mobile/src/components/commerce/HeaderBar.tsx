@@ -2,7 +2,7 @@ import { View, StyleSheet, type StyleProp, type ViewStyle } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme } from "../../theme/ThemeProvider";
 import { useI18n, useFormat } from "../../i18n/I18nProvider";
-import { useCartStore } from "../../store/cartStore";
+import { useCart } from "../../cart/CartProvider";
 import { Text } from "../ui/Text";
 import { IconButton } from "../ui/IconButton";
 import { Pressable } from "../ui/Pressable";
@@ -30,9 +30,9 @@ export function HeaderBar({
   const { colors } = useTheme();
   const { isRTL, t, toggleLanguage, mirrorStyle } = useI18n();
   const { formatNumber } = useFormat();
-  const { getTotals } = useCartStore();
-
-  const { totalCount } = getTotals();
+  // Server-computed line count. Zero whenever the cart is signed out or the
+  // backend is not configured, which is exactly what should be shown.
+  const { itemCount } = useCart();
 
   return (
     <View
@@ -112,10 +112,10 @@ export function HeaderBar({
               onPress={onCartPress}
               accessibilityLabel={t("header.cartBadge")}
             />
-            {totalCount > 0 ? (
+            {itemCount > 0 ? (
               <View style={[styles.badgeCircle, { backgroundColor: colors.brand[600] }]}>
                 <Text variant="caption" tone="inverse" style={styles.badgeText}>
-                  {formatNumber(totalCount)}
+                  {formatNumber(itemCount)}
                 </Text>
               </View>
             ) : null}

@@ -100,12 +100,12 @@ three times is padding wearing a table.
 
 Prioritize by consequence, not by how easy it is to spot:
 
-| Priority | Means |
-| --- | --- |
-| **Critical** | A live credential, or a hole someone can exploit now. The one class that still outranks everything else. |
-| **High** | One rule implemented in several places that will drift, or a collapse that already forces the same logic to be rewritten elsewhere — a bug that has not happened yet. Also a real vulnerability. |
-| **Medium** | Costs maintenance time on every change, or hides bugs — the koshary itself. |
-| **Low** | Tidiness. Worth doing while you are already in the file. |
+| Priority     | Means                                                                                                                                                                                            |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Critical** | A live credential, or a hole someone can exploit now. The one class that still outranks everything else.                                                                                         |
+| **High**     | One rule implemented in several places that will drift, or a collapse that already forces the same logic to be rewritten elsewhere — a bug that has not happened yet. Also a real vulnerability. |
+| **Medium**   | Costs maintenance time on every change, or hides bugs — the koshary itself.                                                                                                                      |
+| **Low**      | Tidiness. Worth doing while you are already in the file.                                                                                                                                         |
 
 A finding earns its place only if you can name the consequence. "This
 function is long" is not a finding; "this 400-line handler mixes auth,
@@ -130,9 +130,9 @@ longer be called from a job or a test; business rules in the UI, so the API
 accepts what the UI forbids; a `utils` module everything imports that
 imports everything back.
 
-Report by consequence: *"the price rule lives in the checkout component, so
-the mobile client and the admin panel each reimplement it"* lands.
-*"This violates separation of concerns"* does not.
+Report by consequence: _"the price rule lives in the checkout component, so
+the mobile client and the admin panel each reimplement it"_ lands.
+_"This violates separation of concerns"_ does not.
 
 ### 2. Duplicated logic
 
@@ -141,8 +141,8 @@ many places would have to change together, and would someone miss one?**
 Three copies of a validation regex is a bug generator. Two functions that
 both happen to loop over an array is nothing.
 
-Quantify it — *"this regex appears in 4 files; changing the rule means
-editing all 4"* — and see the reference for the coincidental-versus-coupled
+Quantify it — _"this regex appears in 4 files; changing the rule means
+editing all 4"_ — and see the reference for the coincidental-versus-coupled
 distinction, which is the call models get wrong most often.
 
 ### 3. Functions and files that stopped being read

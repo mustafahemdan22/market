@@ -76,6 +76,12 @@ function toProduct(raw: ConvexProduct, cloudName: string | null): Product {
 
   const compareAt = raw.compareAtPriceMinor;
 
+  // Cart lines reference a variant, so the add-to-cart affordance needs a
+  // concrete id. Prefer the variant flagged default, then the first with stock.
+  // Otherwise leave it undefined rather than guessing at a reference.
+  const defaultVariantId =
+    raw.variants?.find((v) => v.isDefault)?.id ?? raw.variants?.find((v) => v.available > 0)?.id;
+
   return {
     id: raw._id,
     slug: raw.slug,
@@ -99,6 +105,7 @@ function toProduct(raw: ConvexProduct, cloudName: string | null): Product {
       ? { discountPercent: Math.round(((compareAt - raw.priceMinor) / compareAt) * 100) }
       : {}),
     ...(variants === undefined ? {} : { variants }),
+    ...(defaultVariantId === undefined ? {} : { defaultVariantId }),
   };
 }
 

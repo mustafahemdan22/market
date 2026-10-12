@@ -2,7 +2,7 @@ import { View, StyleSheet, type StyleProp, type ViewStyle } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme } from "../../theme/ThemeProvider";
 import { useI18n, useFormat } from "../../i18n/I18nProvider";
-import { useCartStore } from "../../store/cartStore";
+import { useCart } from "../../cart/CartProvider";
 import { Text } from "../ui/Text";
 import { Button } from "../ui/Button";
 import { radii, spacing, elevations, touchTargets } from "../../theme/tokens";
@@ -17,10 +17,12 @@ export function CartBar({ onViewCart, style }: CartBarProps) {
   const { isRTL, t, mirrorStyle } = useI18n();
   const { formatMoney, formatNumber } = useFormat();
 
-  const { getTotals } = useCartStore();
-  const totals = getTotals();
+  // Both numbers are the server's. The bar is hidden entirely when the cart is
+  // empty, signed out, or unavailable — a bar offering "view cart" over nothing
+  // is noise.
+  const { itemCount, subtotalMinor, status } = useCart();
 
-  if (totals.totalCount === 0) {
+  if (itemCount === 0 || status !== "ready") {
     return null;
   }
 
@@ -44,12 +46,12 @@ export function CartBar({ onViewCart, style }: CartBarProps) {
               tone="inverse"
               style={isRTL ? styles.marginEndCount : styles.marginStartCount}
             >
-              {formatNumber(totals.totalCount)} {t("cartBar.items")}
+              {formatNumber(itemCount)} {t("cartBar.items")}
             </Text>
           </View>
 
           <Text variant="price" tone="inverse" style={styles.priceText}>
-            {formatMoney(totals.totalMinor)}
+            {formatMoney(subtotalMinor)}
           </Text>
         </View>
 

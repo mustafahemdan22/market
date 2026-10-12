@@ -2,8 +2,10 @@ import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 import { mutation, query, type MutationCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
-import { requireCustomerId, ensureCustomer } from "../lib/customer";
+import { requireCustomerId, ensureCustomer, getCustomerId } from "../lib/customer";
 import { nowArg } from "../lib/catalog";
+import { loadOrderLines, releaseReservationForLines } from "../lib/inventory";
+import { CUSTOMER_CANCELLABLE } from "../lib/orderStatus";
 import { invalid, requireText } from "../lib/validate";
 
 /**
@@ -16,6 +18,12 @@ import { invalid, requireText } from "../lib/validate";
  *
  * VAT is INCLUDED in the displayed shelf price (business rule), so there is no
  * separate tax line and `totalMinor` is simply subtotal + delivery.
+ *
+ * PAYMENT: only cash on delivery is accepted. `paymentMethod: "card"` is
+ * rejected outright rather than silently accepted into a state no webhook can
+ * ever resolve — an order that sits at `pending_payment` forever because no
+ * provider is wired up is worse than a clear refusal. Re-enabling card requires
+ * a signature-verified payment webhook; see RELEASE_READINESS.md §6.4.
  */
 
 const CURRENCY = "EGP";
@@ -34,6 +42,20 @@ interface Shipping {
 
 function deliveryFeeFor(subtotalMinor: number): number {
   return subtotalMinor >= FREE_DELIVERY_THRESHOLD_MINOR ? 0 : DELIVERY_FEE_MINOR;
+}
+
+/**
+ * Only the payment methods that can actually settle an order today.
+ * Anything else is refused with a code the UI can explain, not swallowed.
+ */
+function requireSupportedPaymentMethod(value: "cod" | "card"): "cod" | "card" {
+  if (value === "card") {
+    throw new ConvexError({
+      code: "PAYMENT_METHOD_UNAVAILABLE",
+      message: "Card payment is not available yet. Please choose cash on delivery.",
+    });
+  }
+  return "cod";
 }
 
 function dayStamp(now: number): string {
@@ -81,6 +103,7 @@ export const placeOrder = mutation({
   handler: async (ctx, args) => {
     const now = nowArg(args.now);
     const key = requireText(args.idempotencyKey, "Idempotency key", 100);
+    const paymentMethod = requireSupportedPaymentMethod(args.paymentMethod);
     const customerId = await ensureCustomer(ctx, { now });
 
     // --- Idempotency -------------------------------------------------------
@@ -95,7 +118,17 @@ export const placeOrder = mutation({
       .unique();
 
     if (replay !== null) {
-      return { orderId: replay._id, orderNumber: replay.orderNumber, replayed: true };
+      // Same shape as a fresh order so the client has one code path for both.
+      // A replay is a success, not an error: the order the customer wanted
+      // already exists.
+      return {
+        orderId: replay._id,
+        orderNumber: replay.orderNumber,
+        status: replay.status,
+        totalMinor: replay.totalMinor,
+        currency: replay.currency,
+        replayed: true,
+      };
     }
 
     // --- Load the cart -----------------------------------------------------
@@ -208,12 +241,18 @@ export const placeOrder = mutation({
       city: requireText(args.shippingCity, "City"),
     };
 
+    // Cash on delivery settles at the door, so there is nothing to wait for:
+    // the order is confirmed the moment it is placed. A card order would sit at
+    // `pending_payment` until a provider webhook confirmed it — which is why
+    // card is refused above rather than parked in that unreachable state.
+    const status = paymentMethod === "cod" ? "confirmed" : "pending_payment";
+
     const orderId = await ctx.db.insert("orders", {
       customerId,
       orderNumber,
-      status: "pending_payment",
-      paymentMethod: args.paymentMethod,
-      paymentStatus: args.paymentMethod === "cod" ? "unpaid" : "unpaid",
+      status,
+      paymentMethod,
+      paymentStatus: "unpaid",
       shippingName: shipping.name,
       shippingPhone: shipping.phone,
       shippingLine1: shipping.line1,
@@ -272,14 +311,18 @@ export const placeOrder = mutation({
     }
     await ctx.db.patch(cart._id, { updatedAt: now });
 
-    return { orderId, orderNumber, replayed: false, totalMinor };
+    return { orderId, orderNumber, status, totalMinor, currency: CURRENCY, replayed: false };
   },
 });
 
 export const listMyOrders = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    const customerId = await requireCustomerId(ctx);
+    // An unprovisioned customer genuinely has no orders, so an empty list is the
+    // truthful answer rather than a provisioning error the UI cannot act on.
+    const customerId = await getCustomerId(ctx);
+    if (customerId === null) return [];
+
     const limit = Math.min(Math.max(args.limit ?? 20, 1), 50);
 
     const orders = await ctx.db
@@ -287,7 +330,21 @@ export const listMyOrders = query({
       .withIndex("by_customer_createdAt", (q) => q.eq("customerId", customerId))
       .take(limit);
 
-    return orders.map((order) => ({
+    // `itemCount` is a real number, not a placeholder: the order list renders
+    // "3 items" next to each order, and a hardcoded 0 would be a lie about
+    // every order shown. Counted from `orderItems` — the snapshot rows — so it
+    // stays correct after a product is archived or deleted.
+    const counts = await Promise.all(
+      orders.map(async (order) => {
+        const items = await ctx.db
+          .query("orderItems")
+          .withIndex("by_order", (q) => q.eq("orderId", order._id))
+          .collect();
+        return items.reduce((n, item) => n + item.quantity, 0);
+      }),
+    );
+
+    return orders.map((order, index) => ({
       _id: order._id,
       orderNumber: order.orderNumber,
       status: order.status,
@@ -297,7 +354,7 @@ export const listMyOrders = query({
       deliveryFeeMinor: order.deliveryFeeMinor,
       totalMinor: order.totalMinor,
       currency: order.currency,
-      itemCount: 0,
+      itemCount: counts[index] ?? 0,
       createdAt: order.createdAt,
     }));
   },
@@ -336,7 +393,11 @@ export const getOrder = query({
       deliveryFeeMinor: order.deliveryFeeMinor,
       totalMinor: order.totalMinor,
       currency: order.currency,
+      itemCount: items.reduce((n, item) => n + item.quantity, 0),
+      cancelledAt: order.cancelledAt ?? null,
       createdAt: order.createdAt,
+      /** Whether this order may still be cancelled by the customer. */
+      cancellable: CUSTOMER_CANCELLABLE.includes(order.status),
       items: items.map((item) => ({
         _id: item._id,
         sku: item.sku,
@@ -354,9 +415,9 @@ export const getOrder = query({
 /**
  * Cancel an order and release its stock reservation exactly once.
  *
- * The release guard reads `by_order_variant_reason`; if a release movement
- * already exists for this (order, variant) the second attempt aborts, retries,
- * sees the movement, and no-ops. Stock can never be released twice.
+ * The release guard lives in lib/inventory.ts and is shared with the admin
+ * cancellation path, so a cancellation racing anything else cannot free the
+ * same hold twice.
  */
 export const cancelOrder = mutation({
   args: {
@@ -376,56 +437,20 @@ export const cancelOrder = mutation({
     if (order.status === "cancelled") {
       return { orderId: order._id, status: "cancelled" as const, alreadyCancelled: true };
     }
-    if (order.status !== "pending_payment" && order.status !== "confirmed") {
+    if (!CUSTOMER_CANCELLABLE.includes(order.status)) {
       throw new ConvexError({
         code: "INVALID_TRANSITION",
         message: "This order can no longer be cancelled. Please contact support.",
       });
     }
 
-    const items = await ctx.db
-      .query("orderItems")
-      .withIndex("by_order", (q) => q.eq("orderId", args.orderId))
-      .collect();
-
-    for (const item of items) {
-      // Bind to a const first: narrowing on `item.variantId` does not survive
-      // into the closures below.
-      const variantId = item.variantId;
-      const productId = item.productId;
-      if (variantId === undefined) continue;
-
-      const alreadyReleased = await ctx.db
-        .query("inventoryMovements")
-        .withIndex("by_order_variant_reason", (q) =>
-          q.eq("orderId", args.orderId).eq("variantId", variantId).eq("reason", "release"),
-        )
-        .first();
-
-      if (alreadyReleased !== null) continue;
-
-      const level = await ctx.db
-        .query("inventoryLevels")
-        .withIndex("by_variant", (q) => q.eq("variantId", variantId))
-        .unique();
-      if (level === null) continue;
-
-      const release = Math.min(item.quantity, level.reserved);
-      if (release > 0) {
-        await ctx.db.patch(level._id, { reserved: level.reserved - release });
-      }
-
-      await ctx.db.insert("inventoryMovements", {
-        orderId: args.orderId,
-        variantId,
-        onHandDelta: 0,
-        reservedDelta: -release,
-        reason: "release",
-        note: `Order ${order.orderNumber} cancelled`,
-        createdAt: now,
-        ...(productId === undefined ? {} : { productId }),
-      });
-    }
+    const lines = await loadOrderLines(ctx, args.orderId);
+    await releaseReservationForLines(ctx, lines, {
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      now,
+      note: `Order ${order.orderNumber} cancelled by the customer`,
+    });
 
     await ctx.db.patch(args.orderId, { status: "cancelled", cancelledAt: now, updatedAt: now });
     return { orderId: order._id, status: "cancelled" as const, alreadyCancelled: false };

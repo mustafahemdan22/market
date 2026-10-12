@@ -2,31 +2,41 @@ import { View, StyleSheet, type StyleProp, type ViewStyle } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme } from "../../theme/ThemeProvider";
 import { useI18n, useFormat } from "../../i18n/I18nProvider";
-import { useCartStore, type CartItem } from "../../store/cartStore";
+import { cartIssueKey, useCart, type CartLine } from "../../cart/CartProvider";
 import { Text } from "../ui/Text";
 import { Price } from "../ui/Price";
 import { IconButton } from "../ui/IconButton";
 import { QuantityStepper } from "../ui/QuantityStepper";
 import { ProductImage } from "./ProductImage";
+import { imageUrlFor } from "../../data/imageUrls";
 import { radii, spacing } from "../../theme/tokens";
 
 export interface CartLineItemProps {
-  readonly item: CartItem;
-  readonly onItemPress?: () => void;
+  /** A line as returned by `public/cart.getCart`. Never constructed locally. */
+  readonly line: CartLine;
   readonly style?: StyleProp<ViewStyle>;
 }
 
-export function CartLineItem({ item, onItemPress: _onItemPress, style }: CartLineItemProps) {
+/**
+ * One cart line.
+ *
+ * Every value shown here came from the server for THIS variant: the name, the
+ * unit price, the quantity, and the availability. The component performs no
+ * arithmetic beyond displaying the server's line total, because a client that
+ * multiplies its own numbers can disagree with the invoice.
+ */
+export function CartLineItem({ line, style }: CartLineItemProps) {
   const { colors } = useTheme();
   const { isRTL, t } = useI18n();
   const { formatMoney } = useFormat();
-  const { updateQuantity, removeItem } = useCartStore();
+  const { setQuantity, remove, canMutate } = useCart();
 
-  const { product, quantity, selectedVariantId } = item;
-  const name = isRTL ? product.nameAr : product.name;
-  const unit = isRTL ? product.unitAr : product.unit;
+  const name = isRTL ? line.nameAr : line.nameEn;
+  const variantName = isRTL ? line.variantNameAr : line.variantNameEn;
+  const issueKey = cartIssueKey(line.issue);
 
-  const lineTotalMinor = product.priceMinor * quantity;
+  const lineTotalMinor = line.priceMinor * line.quantity;
+  const canIncrement = canMutate && line.available > line.quantity;
 
   return (
     <View
@@ -40,21 +50,29 @@ export function CartLineItem({ item, onItemPress: _onItemPress, style }: CartLin
         style,
       ]}
     >
-      {/* Thumbnail */}
       <View style={styles.thumbnailWrapper}>
-        <ProductImage uri={product.images[0]} alt={name} aspectRatio={1} borderRadius={radii.md} />
+        <ProductImage
+          uri={imageUrlFor(line.imagePublicId ?? null)}
+          alt={name}
+          aspectRatio={1}
+          borderRadius={radii.md}
+        />
       </View>
 
-      {/* Info & Quantity details */}
       <View style={styles.detailsColumn}>
         <View style={[styles.titleRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
           <View style={styles.titleContainer}>
-            <Text variant="caption" tone="muted">
-              {unit}
+            <Text variant="caption" tone="muted" numberOfLines={1}>
+              {variantName === "" ? line.unitLabel : variantName}
             </Text>
             <Text variant="bodyStrong" numberOfLines={2}>
               {name}
             </Text>
+            {issueKey === null ? null : (
+              <Text variant="caption" tone="danger" style={styles.issueLine}>
+                {t(issueKey)}
+              </Text>
+            )}
           </View>
 
           <IconButton
@@ -65,27 +83,34 @@ export function CartLineItem({ item, onItemPress: _onItemPress, style }: CartLin
                 color={colors.text.muted}
               />
             }
-            onPress={() => removeItem(product.id, selectedVariantId)}
-            accessibilityLabel={t("cart.clearAll")}
+            onPress={() => {
+              void remove(line._id);
+            }}
+            accessibilityLabel={t("cart.removeItem")}
             size={36}
+            disabled={!canMutate}
           />
         </View>
 
-        {/* Price and Stepper Row */}
         <View style={[styles.actionsRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
           <View>
-            <Price priceMinor={product.priceMinor} size="sm" />
+            <Price priceMinor={line.priceMinor} size="sm" />
             <Text variant="caption" tone="secondary">
               {t("cart.subtotal")}: {formatMoney(lineTotalMinor)}
             </Text>
           </View>
 
           <QuantityStepper
-            value={quantity}
-            onChange={(newQty) => updateQuantity(product.id, newQty, selectedVariantId)}
-            min={0}
-            max={product.stockQuantity}
+            value={line.quantity}
+            onChange={(next) => {
+              void setQuantity(line._id, next);
+            }}
+            min={1}
+            // The server's `available` is the ceiling. Letting the stepper go
+            // past it only produces a checkout failure later.
+            max={Math.max(line.available, 1)}
             size="sm"
+            disabled={!canMutate || !canIncrement}
           />
         </View>
       </View>
@@ -117,6 +142,9 @@ const styles = StyleSheet.create({
   titleContainer: {
     flex: 1,
     paddingEnd: spacing[2],
+  },
+  issueLine: {
+    marginTop: 2,
   },
   actionsRow: {
     justifyContent: "space-between",
